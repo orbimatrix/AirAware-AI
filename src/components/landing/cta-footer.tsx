@@ -4,7 +4,7 @@ import { Leaf } from "lucide-react";
 
 export function CtaFooter() {
   return (
-    <footer className="py-20 lg:py-28 bg-primary/10">
+    <section className="py-20 lg:py-28 bg-primary/10">
       <div className="container mx-auto px-4 text-center">
         <Leaf className="h-12 w-12 text-primary mx-auto mb-4" />
         <h2 className="text-3xl lg:text-4xl font-bold font-headline text-foreground">
@@ -18,10 +18,7 @@ export function CtaFooter() {
             <Link href="/dashboard">Go to the App</Link>
           </Button>
         </div>
-        <div className="mt-12 text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} Saaf Hawa. All rights reserved.
-        </div>
       </div>
-    </footer>
+    </section>
   );
 }

@@ -5,7 +5,7 @@ import { AqiExplained } from "@/components/landing/aqi-explained";
 import { PersonalizedAdvice } from "@/components/landing/personalized-advice";
 import { FootprintCta } from "@/components/landing/footprint-cta";
 import { ChallengesCta } from "@/components/landing/challenges-cta";
-import { CtaFooter } from "@/components/landing/cta-footer";
+import { Footer } from "@/components/landing/footer";
 
 export default function LandingPage() {
   return (
@@ -18,8 +18,8 @@ export default function LandingPage() {
         <PersonalizedAdvice />
         <FootprintCta />
         <ChallengesCta />
-        <CtaFooter />
       </main>
+      <Footer />
     </div>
   );
 }
