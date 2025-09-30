@@ -23,10 +23,18 @@ export type Challenge = {
   icon: LucideIcon;
 };
 
+export type Badge = {
+  id: string;
+  name: string;
+  description: string;
+  icon: LucideIcon;
+}
+
 export type LeaderboardUser = {
   rank: number;
   name: string;
   score: number;
   avatarUrl: string;
   avatarFallback: string;
+  earnedBadges?: string[]; // Array of badge IDs
 };
