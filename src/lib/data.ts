@@ -1,5 +1,5 @@
 import type { AqiData, Challenge, LeaderboardUser, Badge, EcoReport } from "@/lib/types";
-import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Trash2, Smog } from "lucide-react";
+import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Trash2, Factory } from "lucide-react";
 
 export const mockAqiData: AqiData = {
   location: "Lahore, Pakistan",
@@ -63,6 +63,6 @@ export const mockLeaderboard: LeaderboardUser[] = [
 
 export const mockEcoReports: EcoReport[] = [
     { id: "r1", type: "Trash", description: "Illegal trash dumping near the canal.", position: { top: "30%", left: "35%" }, icon: Trash2 },
-    { id: "r2", type: "Pollution", description: "Factory emitting black smoke.", position: { top: "55%", left: "65%" }, icon: Smog },
+    { id: "r2", type: "Pollution", description: "Factory emitting black smoke.", position: { top: "55%", left: "65%" }, icon: Factory },
     { id: "r3", type: "Trash", description: "Overflowing public bins.", position: { top: "70%", left: "25%" }, icon: Trash2 },
 ];
