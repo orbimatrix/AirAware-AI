@@ -31,7 +31,7 @@ export default function AppLayout({
           <MainNav />
         </SidebarContent>
         <SidebarFooter>
-           <Badge variant="outline">Version 1.0</Badge>
+           <Badge variant="outline">Version 1.1</Badge>
         </SidebarFooter>
       </Sidebar>
       <SidebarInset>
