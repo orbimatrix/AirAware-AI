@@ -1,14 +1,17 @@
 # Saaf Hawa (Clean Air)
 
-Saaf Hawa is a Next.js web application designed to provide real-time air quality information, personalized health recommendations, and tools to promote environmental awareness and action. It's built with a focus on users in Pakistan, with an initial focus on Lahore.
+Saaf Hawa is a comprehensive Next.js web application designed to provide real-time air quality information, personalized health recommendations, and a suite of tools to promote environmental awareness and action. It's built with a focus on users in Pakistan, with an initial focus on Lahore.
 
 ## ✨ Features
 
-- **Dashboard**: A comprehensive overview of the current Air Quality Index (AQI) for your location, along with a detailed breakdown of major pollutants like PM2.5, PM10, O₃, and more.
+- **Real-Time Dashboard**: A comprehensive overview of the current Air Quality Index (AQI) for your location, with a detailed breakdown of major pollutants and an AI-generated weekly insight.
 - **AI-Powered Hazard Zones**: Utilizes generative AI to analyze real-time data and identify high-pollution areas in your vicinity, providing alerts and recommendations to avoid them.
 - **Personalized Health Advice**: Get AI-driven health recommendations tailored to your personal health profile (age, respiratory conditions, etc.) and the current air quality.
-- **Carbon Footprint Calculator**: An interactive tool to estimate your daily carbon footprint based on your lifestyle choices in transportation, energy use, diet, and consumption.
-- **Eco-Challenges & Leaderboard**: Participate in environmental challenges, earn points for positive actions, and see how you rank against others in the community leaderboard.
+- **Health Journal**: Track your daily symptoms and see how they correlate with air quality, helping you understand the personal health impact of pollution.
+- **Carbon Footprint Calculator**: An interactive tool to estimate your weekly carbon footprint based on your lifestyle, track your reduction progress over time, and get AI-powered tips.
+- **Eco-Map**: A real-time, crowdsourced map where users can report environmental issues like trash dumping. An AI model automatically classifies the severity of each report.
+- **Eco-Challenges & Leaderboard**: Participate in environmental challenges, earn points and badges for positive actions, and see how you rank against others in the community leaderboard.
+- **Educational Content**: Access AI-curated articles on key environmental topics like pollution reduction and sustainable living to stay informed and empowered.
 
 ## 🛠️ Tech Stack
 
@@ -17,6 +20,7 @@ Saaf Hawa is a Next.js web application designed to provide real-time air quality
 - **UI**: [React](https://react.dev/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 - **UI Components**: [ShadCN UI](https://ui.shadcn.com/)
+- **Database**: [Firebase Firestore](https://firebase.google.com/docs/firestore) (for real-time updates)
 - **Icons**: [Lucide React](https://lucide.dev/)
 - **Generative AI**: [Genkit](https://firebase.google.com/docs/genkit)
 - **Deployment**: Firebase App Hosting
@@ -44,6 +48,7 @@ To get a local copy up and running, follow these simple steps.
     ```bash
     npm install
     ```
+4.  Set up your Firebase credentials by creating a `.env` file in the root of the project. This is needed for Genkit AI flows and Firestore to work. You can get these from your Firebase project settings.
 
 ### Running the Development Server
 
