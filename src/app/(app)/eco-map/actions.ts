@@ -3,7 +3,6 @@
 import {
   classifyReportSeverity,
   ReportSeverityClassifierOutput,
-  ReportSeverityEnum,
 } from '@/ai/flows/report-severity-classifier';
 import { z } from 'zod';
 

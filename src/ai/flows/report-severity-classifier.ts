@@ -9,9 +9,8 @@
  */
 
 import {ai} from '@/ai/genkit';
+import { ReportSeverityEnum } from '@/lib/types';
 import {z} from 'genkit';
-
-export const ReportSeverityEnum = z.enum(['Low', 'Medium', 'High']);
 
 const ReportSeverityClassifierInputSchema = z.object({
   reportType: z.string().describe("The type of issue reported by the user (e.g., 'Illegal Trash Dumping', 'Visible Air/Water Pollution')."),

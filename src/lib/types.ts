@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import { z } from "zod";
 
 export type Pollutant = {
   name: string;
@@ -49,3 +50,5 @@ export type EcoReport = {
   };
   icon: LucideIcon;
 };
+
+export const ReportSeverityEnum = z.enum(['Low', 'Medium', 'High']);
