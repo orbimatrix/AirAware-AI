@@ -1,0 +1,40 @@
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import {
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+} from '@/components/ui/sidebar';
+import { Home, Map, HeartPulse, Footprints, Trophy } from 'lucide-react';
+
+const navItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: Home, tooltip: 'Dashboard' },
+  { href: '/hazard-zones', label: 'Hazard Zones', icon: Map, tooltip: 'Hazard Zones' },
+  { href: '/recommendations', label: 'Health Advice', icon: HeartPulse, tooltip: 'Health Advice' },
+  { href: '/carbon-footprint', label: 'Carbon Footprint', icon: Footprints, tooltip: 'Carbon Footprint' },
+  { href: '/challenges', label: 'Eco-Challenges', icon: Trophy, tooltip: 'Eco-Challenges' },
+];
+
+export function MainNav() {
+  const pathname = usePathname();
+
+  return (
+    <SidebarMenu>
+      {navItems.map((item) => (
+        <SidebarMenuItem key={item.href}>
+          <SidebarMenuButton 
+            asChild 
+            isActive={pathname.startsWith(item.href)}
+            tooltip={item.tooltip}
+          >
+            <Link href={item.href}>
+              <item.icon className="h-5 w-5" />
+              <span>{item.label}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
