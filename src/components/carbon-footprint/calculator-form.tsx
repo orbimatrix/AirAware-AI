@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, UseFormReturn } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -29,18 +29,17 @@ const labels = {
     consumption: ['Minimalist', 'Average shopper', 'Frequent shopper'],
 }
 
-function CalculatorSlider({ name, label, control, min, max, step, categoryLabels }: { name: keyof FormData, label: string, control: any, min: number, max: number, step: number, categoryLabels: string[] }) {
-    const { watch, setValue } = control;
-    const value = watch(name);
+function CalculatorSlider({ name, label, control, value, categoryLabels }: { name: keyof FormData, label: string, control: UseFormReturn<FormData>, value: number, categoryLabels: string[] }) {
+    const { setValue } = control;
 
     return (
         <div className="space-y-3">
             <Label htmlFor={name} className="text-base">{label}</Label>
             <Slider
                 id={name}
-                min={min}
-                max={max}
-                step={step}
+                min={0}
+                max={100}
+                step={1}
                 value={[value]}
                 onValueChange={(vals) => setValue(name, vals[0])}
             />
@@ -54,7 +53,7 @@ function CalculatorSlider({ name, label, control, min, max, step, categoryLabels
 }
 
 export function CalculatorForm() {
-  const { control, watch } = useForm<FormData>({
+  const form = useForm<FormData>({
     defaultValues: {
       transport: 50,
       energy: 50,
@@ -63,6 +62,7 @@ export function CalculatorForm() {
     },
   });
 
+  const { control, watch } = form;
   const formValues = watch();
 
   const totalFootprint = useMemo(() => {
@@ -81,10 +81,10 @@ export function CalculatorForm() {
           <CardDescription>Adjust the sliders to reflect your daily habits.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          <CalculatorSlider name="transport" label="Daily Commute & Travel" control={control} min={0} max={100} step={1} categoryLabels={labels.transport} />
-          <CalculatorSlider name="energy" label="Home Energy Usage" control={control} min={0} max={100} step={1} categoryLabels={labels.energy} />
-          <CalculatorSlider name="diet" label="Dietary Habits" control={control} min={0} max={100} step={1} categoryLabels={labels.diet} />
-          <CalculatorSlider name="consumption" label="Shopping & Consumption" control={control} min={0} max={100} step={1} categoryLabels={labels.consumption} />
+          <CalculatorSlider name="transport" label="Daily Commute & Travel" control={form} value={formValues.transport} categoryLabels={labels.transport} />
+          <CalculatorSlider name="energy" label="Home Energy Usage" control={form} value={formValues.energy} categoryLabels={labels.energy} />
+          <CalculatorSlider name="diet" label="Dietary Habits" control={form} value={formValues.diet} categoryLabels={labels.diet} />
+          <CalculatorSlider name="consumption" label="Shopping & Consumption" control={form} value={formValues.consumption} categoryLabels={labels.consumption} />
         </CardContent>
       </Card>
       
