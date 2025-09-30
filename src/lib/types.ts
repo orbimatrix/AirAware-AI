@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { z } from "zod";
+import { FieldValue } from "firebase/firestore";
 
 export type Pollutant = {
   name: string;
@@ -40,15 +41,17 @@ export type LeaderboardUser = {
   earnedBadges?: string[]; // Array of badge IDs
 };
 
+export const ReportSeverityEnum = z.enum(['Low', 'Medium', 'High']);
+
 export type EcoReport = {
   id: string;
   type: 'Trash' | 'Pollution' | 'Other';
   description: string;
   position: {
-    top: string;
-    left: string;
+    lat: number;
+    lng: number;
   };
-  icon: LucideIcon;
+  iconName: string;
+  severity: z.infer<typeof ReportSeverityEnum>;
+  createdAt?: FieldValue;
 };
-
-export const ReportSeverityEnum = z.enum(['Low', 'Medium', 'High']);

@@ -1,24 +1,25 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Send, Loader2, Sparkles, AlertTriangle, Shield, CheckCircle } from "lucide-react";
+import { Send, Loader2, LocateFixed } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormMessage } from "../ui/form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { submitReport } from "@/app/(app)/eco-map/actions";
-import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
     reportType: z.string({ required_error: "Please select a report type." }),
     description: z.string().min(10, "Description must be at least 10 characters.").max(200, "Description is too long."),
+    latitude: z.coerce.number(),
+    longitude: z.coerce.number(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,14 +34,11 @@ function SubmitButton() {
   );
 }
 
-const severityMap = {
-    Low: { icon: CheckCircle, color: "text-green-500", label: "Low Severity" },
-    Medium: { icon: AlertTriangle, color: "text-yellow-500", label: "Medium Severity" },
-    High: { icon: Shield, color: "text-red-500", label: "High Severity" },
-};
-
 export function ReportForm() {
   const { toast } = useToast();
+  const [location, setLocation] = useState<{lat: number; lng: number} | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,43 +46,90 @@ export function ReportForm() {
     }
   });
 
-  const initialState = { data: null, error: null };
+  const initialState = { success: false, error: null };
   const [state, formAction] = useActionState(submitReport, initialState);
+  
+  const handleGetLocation = () => {
+    setLocationError(null);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // For demo, we'll keep it within Lahore's bounding box
+          const clampedLat = Math.max(31.3, Math.min(31.6, latitude));
+          const clampedLng = Math.max(74.1, Math.min(74.5, longitude));
+          setLocation({ lat: clampedLat, lng: clampedLng });
+          form.setValue('latitude', clampedLat);
+          form.setValue('longitude', clampedLng);
+          toast({ title: 'Location Acquired!' });
+        },
+        (error) => {
+          setLocationError(`Error: ${error.message}`);
+          toast({ title: 'Location Error', description: error.message, variant: 'destructive' });
+        }
+      );
+    } else {
+      setLocationError("Geolocation is not supported by this browser.");
+      toast({ title: 'Location Error', description: 'Geolocation is not supported.' });
+    }
+  };
+
 
   useEffect(() => {
-    if(state.data) {
+    if (state.success) {
         toast({
             title: "Report Submitted!",
-            description: "Thank you for helping keep the community clean.",
+            description: "Thank you for helping keep the community clean. It's now visible on the map.",
         });
-        form.reset();
+        form.reset({description: ''});
+        setLocation(null);
     }
-  }, [state.data, toast, form]);
+    if (state.error) {
+        toast({
+            title: "Submission Error",
+            description: state.error,
+            variant: "destructive",
+        })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   return (
     <Card>
         <CardHeader>
             <CardTitle>Report an Issue</CardTitle>
-            <CardDescription>Spotted something? Let the community know.</CardDescription>
+            <CardDescription>Spotted something? Get your location and submit a report.</CardDescription>
         </CardHeader>
         <CardContent>
             <Form {...form}>
                 <form action={formAction} className="space-y-6">
+                    <input type="hidden" {...form.register('latitude')} />
+                    <input type="hidden" {...form.register('longitude')} />
+                    
+                     <div className="space-y-2">
+                        <Label>Location</Label>
+                        <Button type="button" variant="outline" className="w-full" onClick={handleGetLocation}>
+                            <LocateFixed className="mr-2" />
+                            {location ? `Location Set: (${location.lat.toFixed(4)}, ${location.lng.toFixed(4)})` : 'Get Current Location'}
+                        </Button>
+                        {(locationError || (form.formState.isSubmitted && !location)) && <p className="text-sm text-destructive">{locationError || 'Please acquire your location to submit a report.'}</p>}
+                    </div>
+
                     <FormField
                         control={form.control}
                         name="reportType"
                         render={({ field }) => (
                             <FormItem>
                                 <Label>Type of Issue</Label>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} defaultValue={field.value} value={field.value}>
                                     <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select a report type" />
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="Illegal Trash Dumping">Illegal Trash Dumping</SelectItem>
-                                        <SelectItem value="Visible Air/Water Pollution">Visible Air/Water Pollution</SelectItem>
+                                        <SelectItem value="Trash">Illegal Trash Dumping</SelectItem>
+                                        <SelectItem value="Pollution">Visible Air/Water Pollution</SelectItem>
                                         <SelectItem value="Other">Other</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -110,30 +155,7 @@ export function ReportForm() {
                     />
                      <div className="space-y-4">
                         <SubmitButton />
-                        {state.error && <p className="text-sm text-destructive">{state.error}</p>}
                     </div>
-
-                    {state.data && (
-                        <div className="border-t pt-4 mt-4">
-                            <h3 className="font-semibold flex items-center gap-2">
-                                <Sparkles className="h-4 w-4 text-primary" />
-                                AI Assessment
-                            </h3>
-                            <div className="flex items-center gap-3 mt-2">
-                                 {(() => {
-                                    const severityInfo = severityMap[state.data.severity];
-                                    const Icon = severityInfo.icon;
-                                    return (
-                                        <Icon className={cn("h-6 w-6", severityInfo.color)} />
-                                    );
-                                })()}
-                                <div>
-                                    <p className={cn("font-bold", severityMap[state.data.severity].color)}>{severityMap[state.data.severity].label}</p>
-                                    <p className="text-sm text-muted-foreground">{state.data.reasoning}</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </form>
             </Form>
         </CardContent>

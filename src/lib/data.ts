@@ -1,5 +1,5 @@
-import type { AqiData, Challenge, LeaderboardUser, Badge, EcoReport } from "@/lib/types";
-import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Trash2, Factory } from "lucide-react";
+import type { AqiData, Challenge, LeaderboardUser, Badge } from "@/lib/types";
+import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield } from "lucide-react";
 
 export const mockAqiData: AqiData = {
   location: "Lahore, Pakistan",
@@ -59,10 +59,4 @@ export const mockLeaderboard: LeaderboardUser[] = [
   { rank: 3, name: "Fatima Ali", score: 2200, avatarUrl: "https://picsum.photos/seed/user4/40/40", avatarFallback: "FA", earnedBadges: ["b1", "b2"] },
   { rank: 4, name: "You", score: 2150, avatarUrl: "https://picsum.photos/seed/user1/40/40", avatarFallback: "UP", earnedBadges: ["b1"] },
   { rank: 5, name: "Usman Tariq", score: 1900, avatarUrl: "https://picsum.photos/seed/user5/40/40", avatarFallback: "UT", earnedBadges: ["b1"] },
-];
-
-export const mockEcoReports: EcoReport[] = [
-    { id: "r1", type: "Trash", description: "Illegal trash dumping near the canal.", position: { top: "30%", left: "35%" }, icon: Trash2 },
-    { id: "r2", type: "Pollution", description: "Factory emitting black smoke.", position: { top: "55%", left: "65%" }, icon: Factory },
-    { id: "r3", type: "Trash", description: "Overflowing public bins.", position: { top: "70%", left: "25%" }, icon: Trash2 },
 ];
