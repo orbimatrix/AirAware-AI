@@ -6,7 +6,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Home, Map, HeartPulse, Footprints, Trophy, ShieldAlert } from 'lucide-react';
+import { Home, Map, HeartPulse, Footprints, Trophy, ShieldAlert, MessageSquarePlus } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, tooltip: 'Dashboard' },
@@ -14,6 +14,7 @@ const navItems = [
   { href: '/recommendations', label: 'Health Advice', icon: HeartPulse, tooltip: 'Health Advice' },
   { href: '/carbon-footprint', label: 'Carbon Footprint', icon: Footprints, tooltip: 'Carbon Footprint' },
   { href: '/challenges', label: 'Eco-Challenges', icon: Trophy, tooltip: 'Eco-Challenges' },
+  { href: '/eco-map', label: 'Eco-Map', icon: MessageSquarePlus, tooltip: 'Eco-Map' },
 ];
 
 export function MainNav() {

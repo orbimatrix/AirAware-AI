@@ -38,3 +38,14 @@ export type LeaderboardUser = {
   avatarFallback: string;
   earnedBadges?: string[]; // Array of badge IDs
 };
+
+export type EcoReport = {
+  id: string;
+  type: 'Trash' | 'Pollution' | 'Other';
+  description: string;
+  position: {
+    top: string;
+    left: string;
+  };
+  icon: LucideIcon;
+};
