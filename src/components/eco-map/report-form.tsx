@@ -1,7 +1,8 @@
 "use client";
 
-import { useFormState, useFormStatus } from "react-dom";
-import { useForm, SubmitHandler } from "react-hook-form";
+import { useFormStatus } from "react-dom";
+import { useActionState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -13,7 +14,6 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from "../ui/form"
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { submitReport } from "@/app/(app)/eco-map/actions";
-import { useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
@@ -49,7 +49,7 @@ export function ReportForm() {
   });
 
   const initialState = { data: null, error: null };
-  const [state, formAction] = useFormState(submitReport, initialState);
+  const [state, formAction] = useActionState(submitReport, initialState);
 
   useEffect(() => {
     if(state.data) {

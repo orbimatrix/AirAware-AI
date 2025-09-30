@@ -1,6 +1,7 @@
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
 import { getHealthRecommendation } from '@/app/(app)/recommendations/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { HeartPulse, Info, Loader2, Sparkles, Terminal } from 'lucide-react';
-import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +26,7 @@ function SubmitButton() {
 
 export function HealthForm() {
   const initialState = { data: null, error: null };
-  const [state, formAction] = useFormState(getHealthRecommendation, initialState);
+  const [state, formAction] = useActionState(getHealthRecommendation, initialState);
   const { toast } = useToast();
 
   useEffect(() => {

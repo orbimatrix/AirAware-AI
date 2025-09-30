@@ -1,6 +1,7 @@
 'use client'
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useFormStatus } from 'react-dom';
+import { useActionState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -10,7 +11,6 @@ import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart } from 'lucide-rea
 import { getWeeklyFootprint } from '@/app/(app)/carbon-footprint/actions';
 import { HistoryChart } from './history-chart';
 import { useFootprintHistory } from '@/hooks/use-footprint-history';
-import { useEffect } from 'react';
 
 type FormData = {
   transport: number;
@@ -76,7 +76,7 @@ export function CalculatorForm() {
   const { control } = form;
 
   const initialState = { data: null, error: null };
-  const [state, formAction] = useFormState(getWeeklyFootprint, initialState);
+  const [state, formAction] = useActionState(getWeeklyFootprint, initialState);
   
   const { history, addEntry } = useFootprintHistory();
 
