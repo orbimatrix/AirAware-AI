@@ -6,11 +6,11 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Home, Map, HeartPulse, Footprints, Trophy } from 'lucide-react';
+import { Home, Map, HeartPulse, Footprints, Trophy, ShieldAlert } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, tooltip: 'Dashboard' },
-  { href: '/hazard-zones', label: 'Hazard Zones', icon: Map, tooltip: 'Hazard Zones' },
+  { href: '/hazard-zones', label: 'Hazard Zones', icon: ShieldAlert, tooltip: 'Hazard Zones' },
   { href: '/recommendations', label: 'Health Advice', icon: HeartPulse, tooltip: 'Health Advice' },
   { href: '/carbon-footprint', label: 'Carbon Footprint', icon: Footprints, tooltip: 'Carbon Footprint' },
   { href: '/challenges', label: 'Eco-Challenges', icon: Trophy, tooltip: 'Eco-Challenges' },

@@ -18,7 +18,7 @@ function HazardMapSkeleton() {
 
 export default function HazardZonesPage() {
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
         title="Hazard Zones"
         description="AI-detected high-pollution areas in your vicinity."
