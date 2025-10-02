@@ -1,13 +1,13 @@
 
 'use client'
 
-import { useFormStatus, useFormState } from 'react-dom';
+import { useFormState } from 'react-dom';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Building, Car, Utensils, Trash2, Home } from 'lucide-react';
+import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Building, Car, Utensils, Trash2, Home, Power, Droplets, Plane, Train, Bus, ShoppingBag, Tv } from 'lucide-react';
 import { getWeeklyFootprint } from '@/app/(app)/carbon-footprint/actions';
 import { HistoryChart } from './history-chart';
 import { useFootprintHistory } from '@/hooks/use-footprint-history';
@@ -17,37 +17,41 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '../ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { CarbonFootprintCalculatorInput } from '@/ai/flows/carbon-footprint-calculator';
 
 const CarbonFootprintCalculatorInputSchema = z.object({
-  // Housing & Energy
+  // Housing
   householdSize: z.coerce.number().min(1),
-  electricityKwh: z.coerce.number().min(0).describe("Monthly electricity usage in kWh."),
-  naturalGasM3: z.coerce.number().min(0).describe("Monthly natural gas usage in cubic meters."),
-  heatingOilL: z.coerce.number().min(0).describe("Monthly heating oil usage in litres."),
+  electricityKwh: z.coerce.number().min(0),
+  naturalGasM3: z.coerce.number().min(0),
+  heatingOilL: z.coerce.number().min(0),
   
   // Transport
-  carKm: z.coerce.number().min(0).describe("Monthly distance driven by car in km."),
+  carKm: z.coerce.number().min(0),
   carFuelType: z.enum(['petrol', 'diesel', 'electric']),
-  carFuelEconomy: z.coerce.number().min(0).describe("Car's fuel economy in L/100km for petrol/diesel, or kWh/100km for electric."),
-  
-  flightsShort: z.coerce.number().min(0).describe("Number of short-haul return flights per year."),
-  flightsLong: z.coerce.number().min(0).describe("Number of long-haul return flights per year."),
+  carFuelEconomy: z.coerce.number().min(0),
+  motorbikeKm: z.coerce.number().min(0),
+  publicBusKm: z.coerce.number().min(0),
+  publicTrainKm: z.coerce.number().min(0),
+  flightsShort: z.coerce.number().min(0),
+  flightsLong: z.coerce.number().min(0),
 
   // Diet
   diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
   
-  // Waste
-  wasteKg: z.coerce.number().min(0).describe("Weekly non-recycled waste in kg."),
+  // Goods & Waste
+  wasteKg: z.coerce.number().min(0),
+  clothingItems: z.coerce.number().min(0),
+  electronicsSpend: z.coerce.number().min(0),
 });
 
 type FormValues = z.infer<typeof CarbonFootprintCalculatorInputSchema>;
 
 
-function SubmitButton() {
-  const { pending } = useFormStatus();
+function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full" size="lg">
-      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+    <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
+      {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
       Calculate My Annual Footprint
     </Button>
   );
@@ -64,10 +68,15 @@ export function CalculatorForm() {
       carKm: 400,
       carFuelType: 'petrol',
       carFuelEconomy: 8,
+      motorbikeKm: 0,
+      publicBusKm: 20,
+      publicTrainKm: 0,
       flightsShort: 1,
       flightsLong: 0,
       diet: 'omnivore',
       wasteKg: 4,
+      clothingItems: 5,
+      electronicsSpend: 50,
     },
   });
 
@@ -75,16 +84,6 @@ export function CalculatorForm() {
   const [state, formAction] = useFormState(getWeeklyFootprint, initialState);
   
   const { history, addEntry } = useFootprintHistory();
-
-  const onSubmit = form.handleSubmit((data) => {
-    const formData = new FormData();
-    Object.entries(data).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    });
-    formAction(formData);
-  });
 
   useEffect(() => {
     if (state.data) {
@@ -102,7 +101,7 @@ export function CalculatorForm() {
         <div className="grid gap-8 lg:grid-cols-2">
             <Card className="self-start">
                 <Form {...form}>
-                    <form onSubmit={onSubmit}>
+                    <form action={formAction} className="space-y-6">
                         <CardHeader>
                             <CardTitle>Detailed Lifestyle Inputs</CardTitle>
                             <CardDescription>Provide your typical monthly data to estimate your annual carbon footprint. The more accurate your inputs, the better the estimate.</CardDescription>
@@ -134,10 +133,19 @@ export function CalculatorForm() {
                                             <FormItem><Label>Monthly Distance by Car (km)</Label><FormControl><Input type="number" placeholder="e.g., 400" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                         <FormField control={form.control} name="carFuelType" render={({ field }) => (
-                                            <FormItem><Label>Car Fuel Type</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="petrol">Petrol</SelectItem><SelectItem value="diesel">Diesel</SelectItem><SelectItem value="electric">Electric</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                            <FormItem><Label>Car Fuel Type</Label><Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="petrol">Petrol</SelectItem><SelectItem value="diesel">Diesel</SelectItem><SelectItem value="electric">Electric</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                         )} />
                                         <FormField control={form.control} name="carFuelEconomy" render={({ field }) => (
-                                            <FormItem><Label>Fuel Economy (L/100km or kWh/100km)</Label><FormControl><Input type="number" placeholder="e.g., 8" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Car Fuel Economy (L or kWh / 100km)</Label><FormControl><Input type="number" placeholder="e.g., 8" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                         <FormField control={form.control} name="motorbikeKm" render={({ field }) => (
+                                            <FormItem><Label>Monthly Distance by Motorbike (km)</Label><FormControl><Input type="number" placeholder="e.g., 0" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="publicBusKm" render={({ field }) => (
+                                            <FormItem><Label>Monthly Distance by Public Bus (km)</Label><FormControl><Input type="number" placeholder="e.g., 20" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="publicTrainKm" render={({ field }) => (
+                                            <FormItem><Label>Monthly Distance by Train (km)</Label><FormControl><Input type="number" placeholder="e.g., 0" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                          <FormField control={form.control} name="flightsShort" render={({ field }) => (
                                             <FormItem><Label>Short-Haul Return Flights (per year)</Label><FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl><FormDescription>Flights under 3 hours.</FormDescription><FormMessage /></FormItem>
@@ -152,23 +160,29 @@ export function CalculatorForm() {
                                     <AccordionTrigger className="text-lg font-semibold"><Utensils className="mr-2 h-5 w-5 text-primary" />Food & Diet</AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="diet" render={({ field }) => (
-                                            <FormItem><Label>Dietary Profile</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="vegan">Vegan</SelectItem><SelectItem value="vegetarian">Vegetarian</SelectItem><SelectItem value="pescatarian">Pescatarian</SelectItem><SelectItem value="omnivore">Omnivore (avg. meat)</SelectItem><SelectItem value="omnivore_high_meat">Omnivore (high meat)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
+                                            <FormItem><Label>Primary Dietary Profile</Label><Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="vegan">Vegan</SelectItem><SelectItem value="vegetarian">Vegetarian</SelectItem><SelectItem value="pescatarian">Pescatarian</SelectItem><SelectItem value="omnivore">Omnivore (avg. meat)</SelectItem><SelectItem value="omnivore_high_meat">Omnivore (high meat)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                         )} />
                                     </AccordionContent>
                                 </AccordionItem>
 
-                                 <AccordionItem value="waste">
-                                    <AccordionTrigger className="text-lg font-semibold"><Trash2 className="mr-2 h-5 w-5 text-primary" />Waste</AccordionTrigger>
+                                 <AccordionItem value="goods">
+                                    <AccordionTrigger className="text-lg font-semibold"><ShoppingBag className="mr-2 h-5 w-5 text-primary" />Goods, Services & Waste</AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="wasteKg" render={({ field }) => (
                                             <FormItem><Label>Weekly Non-Recycled Household Waste (kg)</Label><FormControl><Input type="number" placeholder="e.g., 4" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="clothingItems" render={({ field }) => (
+                                            <FormItem><Label>New Clothing Items (per month)</Label><FormControl><Input type="number" placeholder="e.g., 2" {...field} /></FormControl><FormMessage /></FormItem>
+                                        )} />
+                                        <FormField control={form.control} name="electronicsSpend" render={({ field }) => (
+                                            <FormItem><Label>Electronics Spend (USD per month)</Label><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                     </AccordionContent>
                                 </AccordionItem>
                             </Accordion>
                         </CardContent>
                         <CardFooter className="flex-col items-start gap-4 pt-6">
-                            <SubmitButton />
+                            <SubmitButton isSubmitting={form.formState.isSubmitting} />
                             {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
                         </CardFooter>
                     </form>
@@ -194,7 +208,7 @@ export function CalculatorForm() {
                                   return (
                                     <div key={key}>
                                         <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-medium capitalize">{key}</span>
+                                            <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
                                             <span className="text-muted-foreground">{value.toFixed(2)} t</span>
                                         </div>
                                         <div className="w-full bg-primary/20 rounded-full h-2.5">
@@ -243,3 +257,5 @@ export function CalculatorForm() {
     </div>
   );
 }
+
+    
