@@ -1,17 +1,20 @@
-// src/hooks/useAirQualityData.ts or src/data.ts
+// src/hooks/useAirQualityData.ts
 import { useState, useEffect } from 'react';
 
+// According to OpenWeatherMap response structure
 interface AirQualityData {
-  source: string;
-  location: { id: number; name: string; coordinates: { latitude: number; longitude: number } };
-  measurements: any[]; // Define a more specific type based on OpenAQ response
-  aqi: {
-    overall: number;
-    dominantPollutant: string | null;
-    byPollutant: any; // Define a more specific type
-    method: string;
+  aqi: number;
+  components: {
+    co: number;
+    no: number;
+    no2: number;
+    o3: number;
+    so2: number;
+    pm2_5: number;
+    pm10: number;
+    nh3: number;
   };
-  rawLocationLatest: any; // Define a more specific type
+  dt: number;
 }
 
 interface UseAirQualityDataResult {
@@ -37,15 +40,24 @@ export function useAirQualityData(lat: number | null, lon: number | null): UseAi
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`/api/openaq?lat=${lat}&lon=${lon}`);
+        const response = await fetch(`/api/air-quality?lat=${lat}&lon=${lon}`);
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || 'Failed to fetch air quality data');
         }
-        const result: AirQualityData = await response.json();
-        setData(result);
-      } catch (err) {
-        setError(String(err));
+        const result = await response.json();
+        if (result.list && result.list.length > 0) {
+            const apiData = result.list[0];
+            setData({
+                aqi: apiData.main.aqi,
+                components: apiData.components,
+                dt: apiData.dt
+            });
+        } else {
+            throw new Error("No air quality data found for the location.")
+        }
+      } catch (err: any) {
+        setError(err.message || 'An unknown error occurred');
       } finally {
         setLoading(false);
       }

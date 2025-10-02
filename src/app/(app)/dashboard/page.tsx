@@ -3,7 +3,6 @@
 import { AqiSummaryCard } from "@/components/dashboard/aqi-summary-card";
 import { PollutantGrid } from "@/components/dashboard/pollutant-grid";
 import { PageHeader } from "@/components/page-header";
-import { mockAqiData } from "@/lib/data";
 import { AqiInsightCard } from "@/components/dashboard/aqi-insight-card";
 import { Suspense, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,18 +44,17 @@ function DashboardSkeleton() {
 }
 
 function getAqiStatus(aqi: number) {
-    if (aqi <= 50) return { status: "Good", className: "text-green-600" };
-    if (aqi <= 100) return { status: "Moderate", className: "text-yellow-600" };
-    if (aqi <= 150) return { status: "Unhealthy for Sensitive Groups", className: "text-orange-600" };
-    if (aqi <= 200) return { status: "Unhealthy", className: "text-red-600" };
-    if (aqi <= 300) return { status: "Very Unhealthy", className: "text-purple-600" };
-    return { status: "Hazardous", className: "text-maroon-600" };
+    if (aqi <= 1) return { status: "Good", className: "text-green-600" };
+    if (aqi <= 2) return { status: "Fair", className: "text-yellow-600" };
+    if (aqi <= 3) return { status: "Moderate", className: "text-orange-600" };
+    if (aqi <= 4) return { status: "Poor", className: "text-red-600" };
+    return { status: "Very Poor", className: "text-purple-600" };
 }
 
 export default function DashboardPage() {
   const [insight, setInsight] = useState<AirQualityInsightOutput | null>(null);
   const [loadingInsight, setLoadingInsight] = useState(true);
-  const [location, setLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [location, setLocation] = useState<{ lat: number; lon: number, name: string } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
   const { data: aqData, loading: loadingAq, error: errorAq } = useAirQualityData(location?.lat ?? null, location?.lon ?? null);
@@ -69,6 +67,7 @@ export default function DashboardPage() {
           setLocation({
             lat: position.coords.latitude,
             lon: position.coords.longitude,
+            name: "your current location"
           });
         },
         (error) => {
@@ -86,14 +85,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function fetchInsight() {
-      if (!aqData?.aqi.overall) return;
+      if (!aqData?.aqi) return;
       try {
         setLoadingInsight(true);
         // In a real app, you'd fetch the previous week's AQI from a database.
-        const previousWeekAqi = 225;
+        const previousWeekAqi = 3; // Corresponds to Moderate
         const insightData = await getAirQualityInsight({
-          location: aqData.location.name,
-          currentAqi: aqData.aqi.overall,
+          location: location?.name ?? 'your city',
+          currentAqi: aqData.aqi,
           previousAqi: previousWeekAqi,
         });
         setInsight(insightData);
@@ -104,20 +103,20 @@ export default function DashboardPage() {
       }
     }
     fetchInsight();
-  }, [aqData]);
+  }, [aqData, location]);
 
   const transformedData: AqiData | null = aqData ? {
-    location: aqData.location.name,
-    aqi: aqData.aqi.overall,
-    status: getAqiStatus(aqData.aqi.overall).status,
-    statusClassName: getAqiStatus(aqData.aqi.overall).className,
+    location: location?.name ?? 'Your Location',
+    aqi: aqData.aqi,
+    status: getAqiStatus(aqData.aqi).status,
+    statusClassName: getAqiStatus(aqData.aqi).className,
     pollutants: [
-      { name: "PM2.5", value: aqData.measurements.pm25?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Gauge },
-      { name: "PM10", value: aqData.measurements.pm10?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Gauge },
-      { name: "O₃", value: aqData.measurements.o3?.toFixed(2) ?? 0, unit: "ppb", Icon: Wind },
-      { name: "NO₂", value: aqData.measurements.no2?.toFixed(2) ?? 0, unit: "ppb", Icon: Wind },
-      { name: "CO", value: aqData.measurements.co?.toFixed(2) ?? 0, unit: "ppm", Icon: Droplets },
-      { name: "SO₂", value: aqData.measurements.so2?.toFixed(2) ?? 0, unit: "ppb", Icon: Droplets },
+      { name: "PM2.5", value: aqData.components.pm2_5?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Gauge },
+      { name: "PM10", value: aqData.components.pm10?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Gauge },
+      { name: "O₃", value: aqData.components.o3?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Wind },
+      { name: "NO₂", value: aqData.components.no2?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Wind },
+      { name: "CO", value: aqData.components.co?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Droplets },
+      { name: "SO₂", value: aqData.components.so2?.toFixed(2) ?? 0, unit: "μg/m³", Icon: Droplets },
     ].filter(p => p.value > 0),
   } : null;
 
