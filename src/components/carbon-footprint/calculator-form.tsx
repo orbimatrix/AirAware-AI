@@ -6,14 +6,14 @@ import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Building, Car, Utensils, Trash2, Home, Power, Droplets, Plane, Train, Bus, ShoppingBag, Tv } from 'lucide-react';
+import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Home, Car, Utensils, Trash2 } from 'lucide-react';
 import { getWeeklyFootprint } from '@/app/(app)/carbon-footprint/actions';
 import { HistoryChart } from './history-chart';
 import { useFootprintHistory } from '@/hooks/use-footprint-history';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '../ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CarbonFootprintCalculatorInput } from '@/ai/flows/carbon-footprint-calculator';
@@ -72,6 +72,14 @@ export function CalculatorForm() {
   
   const { history, addEntry } = useFootprintHistory();
 
+  const onSubmit = form.handleSubmit((data) => {
+    const formData = new FormData();
+    for (const key in data) {
+      formData.append(key, (data as any)[key]);
+    }
+    formAction(formData);
+  });
+
   useEffect(() => {
     if (state.data) {
       addEntry({
@@ -88,7 +96,7 @@ export function CalculatorForm() {
         <div className="grid gap-8 lg:grid-cols-2">
             <Card className="self-start">
                 <Form {...form}>
-                    <form action={formAction} className="space-y-6">
+                    <form onSubmit={onSubmit} className="space-y-6">
                         <CardHeader>
                             <CardTitle>Detailed Lifestyle Inputs</CardTitle>
                             <CardDescription>Provide your typical monthly data to estimate your annual carbon footprint. The more accurate your inputs, the better the estimate.</CardDescription>
@@ -229,7 +237,5 @@ export function CalculatorForm() {
     </div>
   );
 }
-
-    
 
     
