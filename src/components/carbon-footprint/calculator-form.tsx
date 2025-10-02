@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -13,26 +13,21 @@ import { useFootprintHistory } from '@/hooks/use-footprint-history';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
+import { Form, FormControl, FormField, FormItem, FormMessage, FormDescription } from '../ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CarbonFootprintCalculatorInput } from '@/ai/flows/carbon-footprint-calculator';
 
 const CarbonFootprintCalculatorInputSchema = z.object({
   householdSize: z.coerce.number().min(1),
-  // Housing
   electricityKwh: z.coerce.number().min(0),
   naturalGasM3: z.coerce.number().min(0),
   heatingOilL: z.coerce.number().min(0),
-  // Transport
   carKm: z.coerce.number().min(0),
   carFuelType: z.enum(['petrol', 'diesel', 'electric']),
   carFuelEconomy: z.coerce.number().min(0),
   flightsShort: z.coerce.number().min(0),
   flightsLong: z.coerce.number().min(0),
-  // Diet
   diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
-  // Waste
   wasteKg: z.coerce.number().min(0),
 });
 
@@ -67,6 +62,7 @@ export function CalculatorForm() {
     },
   });
 
+  const [isPending, startTransition] = useTransition();
   const initialState = { data: null, error: null };
   const [state, formAction] = useActionState(getWeeklyFootprint, initialState);
   
@@ -77,7 +73,9 @@ export function CalculatorForm() {
     for (const key in data) {
       formData.append(key, (data as any)[key]);
     }
-    formAction(formData);
+    startTransition(() => {
+        formAction(formData);
+    });
   });
 
   useEffect(() => {
@@ -162,7 +160,7 @@ export function CalculatorForm() {
                             </Accordion>
                         </CardContent>
                         <CardFooter className="flex-col items-start gap-4 pt-6">
-                            <SubmitButton isSubmitting={form.formState.isSubmitting} />
+                            <SubmitButton isSubmitting={isPending} />
                             {state?.error && <p className="text-sm text-destructive">{state.error}</p>}
                         </CardFooter>
                     </form>
