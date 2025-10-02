@@ -1,5 +1,5 @@
 import type { AqiData, Challenge, LeaderboardUser, Badge } from "@/lib/types";
-import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Footprints, Gem } from "lucide-react";
+import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Footprints, Gem, PackageX, Carrot, Apple, Wrench, ShowerHead } from "lucide-react";
 
 export const mockAqiData: AqiData = {
   location: "Lahore, Pakistan",
@@ -20,16 +20,30 @@ export const mockChallenges: Challenge[] = [
   {
     id: "1",
     title: "Green Commuter",
-    description: "Use public transport or carpool for 5 days in a row.",
-    points: 50,
+    description: "Use public transport or carpool for a day.",
+    points: 30,
     icon: Tractor,
   },
   {
     id: "2",
     title: "Tree Hugger",
-    description: "Plant a tree in your community or donate to a tree-planting organization.",
+    description: "Plant a tree or a houseplant.",
     points: 100,
     icon: Trees,
+  },
+  {
+    id: "3",
+    title: "Waste Warrior",
+    description: "Ensure all recyclable items are properly sorted for a week.",
+    points: 40,
+    icon: Leaf,
+  },
+  {
+    id: "4",
+    title: "Energy Saver",
+    description: "Turn off all non-essential lights and unplug electronics for a day.",
+    points: 25,
+    icon: Mountain,
   },
   {
     id: "5",
@@ -39,18 +53,39 @@ export const mockChallenges: Challenge[] = [
     icon: Footprints,
   },
   {
-    id: "3",
-    title: "Waste Warrior",
-    description: "Reduce your household waste by 25% for one week.",
-    points: 75,
-    icon: Leaf,
+    id: "6",
+    title: "No Single-Use",
+    description: "Go a full day without using any single-use plastic bottles or bags.",
+    points: 35,
+    icon: PackageX,
   },
   {
-    id: "4",
-    title: "Energy Saver",
-    description: "Reduce your electricity consumption by 10% for a month.",
-    points: 150,
-    icon: Mountain,
+    id: "7",
+    title: "Meatless Meal",
+    description: "Eat one fully vegetarian or vegan meal.",
+    points: 20,
+    icon: Carrot,
+  },
+  {
+    id: "8",
+    title: "Shop Local",
+    description: "Buy one item of produce that was grown locally.",
+    points: 15,
+    icon: Apple,
+  },
+  {
+    id: "9",
+    title: "Fix It, Don't Ditch It",
+    description: "Repair one broken item instead of replacing it.",
+    points: 50,
+    icon: Wrench,
+  },
+  {
+    id: "10",
+    title: "Water Wise",
+    description: "Take a shower that is 5 minutes or less.",
+    points: 15,
+    icon: ShowerHead,
   },
 ];
 
