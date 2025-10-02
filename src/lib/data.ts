@@ -1,5 +1,5 @@
 import type { AqiData, Challenge, LeaderboardUser, Badge } from "@/lib/types";
-import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield } from "lucide-react";
+import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Footprints } from "lucide-react";
 
 export const mockAqiData: AqiData = {
   location: "Lahore, Pakistan",
@@ -30,6 +30,13 @@ export const mockChallenges: Challenge[] = [
     description: "Plant a tree in your community or donate to a tree-planting organization.",
     points: 100,
     icon: Trees,
+  },
+  {
+    id: "5",
+    title: "Track Your Footprint",
+    description: "Calculate your carbon footprint to understand your impact.",
+    points: 20,
+    icon: Footprints,
   },
   {
     id: "3",

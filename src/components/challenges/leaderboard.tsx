@@ -1,3 +1,6 @@
+
+"use client";
+
 import {
   Table,
   TableBody,
@@ -10,8 +13,32 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { mockLeaderboard } from "@/lib/data";
 import { cn } from "@/lib/utils";
+import { useUserScore } from "@/hooks/use-user-score";
+import { useEffect, useState } from "react";
+import type { LeaderboardUser } from "@/lib/types";
 
 export function Leaderboard() {
+  const { score } = useUserScore();
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>(mockLeaderboard);
+
+  useEffect(() => {
+    // Update the 'You' user's score and re-sort the leaderboard
+    const updatedLeaderboard = mockLeaderboard.map(user => 
+      user.name === 'You' ? { ...user, score } : user
+    );
+    
+    updatedLeaderboard.sort((a, b) => b.score - a.score);
+
+    // Re-assign ranks
+    const rankedLeaderboard = updatedLeaderboard.map((user, index) => ({
+      ...user,
+      rank: index + 1,
+    }));
+
+    setLeaderboard(rankedLeaderboard);
+  }, [score]);
+
+
   return (
     <Card>
       <CardHeader>
@@ -28,7 +55,7 @@ export function Leaderboard() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mockLeaderboard.map((user) => (
+            {leaderboard.map((user) => (
               <TableRow key={user.rank} className={cn(user.name === 'You' && 'bg-primary/10')}>
                 <TableCell className="font-medium text-lg">{user.rank}</TableCell>
                 <TableCell>
@@ -49,3 +76,4 @@ export function Leaderboard() {
     </Card>
   );
 }
+

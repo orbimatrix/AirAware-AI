@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Home, Car, Utensils, Trash2 } from 'lucide-react';
+import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Home, Car, Utensils, Trash2, Hotel, Plane, ShoppingCart, Video, Computer } from 'lucide-react';
 import { getWeeklyFootprint } from '@/app/(app)/carbon-footprint/actions';
 import { HistoryChart } from './history-chart';
 import { useFootprintHistory } from '@/hooks/use-footprint-history';
@@ -16,19 +16,21 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '..
 import { Form, FormControl, FormField, FormItem, FormMessage, FormDescription } from '../ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useUserScore } from '@/hooks/use-user-score';
+import { toast } from '@/hooks/use-toast';
 
 const CarbonFootprintCalculatorInputSchema = z.object({
-  householdSize: z.coerce.number().min(1),
+  householdSize: z.coerce.number().min(1, 'Must be at least 1.'),
   electricityKwh: z.coerce.number().min(0),
   naturalGasM3: z.coerce.number().min(0),
   heatingOilL: z.coerce.number().min(0),
   carKm: z.coerce.number().min(0),
   carFuelType: z.enum(['petrol', 'diesel', 'electric']),
-  carFuelEconomy: z.coerce.number().min(0),
+  carFuelEconomy: z.coerce.number().min(0, "Can't be negative."),
   flightsShort: z.coerce.number().min(0),
   flightsLong: z.coerce.number().min(0),
   diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
-  wasteKg: z.coerce.number().min(0),
+  wasteKg: z.coerce.number().min(0, "Can't be negative."),
 });
 
 
@@ -67,6 +69,7 @@ export function CalculatorForm() {
   const [state, formAction] = useActionState(getWeeklyFootprint, initialState);
   
   const { history, addEntry } = useFootprintHistory();
+  const { addScore } = useUserScore();
 
   const onSubmit = form.handleSubmit((data) => {
     const formData = new FormData();
@@ -80,9 +83,26 @@ export function CalculatorForm() {
 
   useEffect(() => {
     if (state.data) {
+      const newFootprint = state.data.totalFootprint;
+      
+      const lastEntry = history[history.length - 1];
+      let pointsEarned = 20; // Base points for calculation
+      let toastDescription = "You've earned 20 points for calculating your footprint!";
+
+      if (lastEntry && newFootprint < lastEntry.footprint) {
+        pointsEarned += 50; // Bonus for reduction
+        toastDescription = `Great job! Your footprint is lower. You earned a bonus 50 points, for a total of ${pointsEarned}!`;
+      }
+      
+      addScore(pointsEarned);
+      toast({
+        title: "Points Awarded!",
+        description: toastDescription,
+      });
+
       addEntry({
         date: new Date().toISOString().split('T')[0],
-        footprint: state.data.totalFootprint,
+        footprint: newFootprint,
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -168,7 +188,15 @@ export function CalculatorForm() {
             </Card>
             
             <div className="flex items-start justify-center">
-                {state?.data ? (
+                {isPending && !state?.data && (
+                  <div className="flex h-full w-full min-h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-8 text-center sticky top-24">
+                      <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground">Calculating your footprint...</h3>
+                      <p className="text-sm text-muted-foreground">The AI is running the numbers.</p>
+                  </div>
+                )}
+
+                {!isPending && state?.data ? (
                     <Card className="w-full bg-primary/10 border-primary/20 sticky top-24">
                         <CardHeader className="items-center text-center">
                             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20 text-primary mb-4">
@@ -208,7 +236,7 @@ export function CalculatorForm() {
                             </div>
                         </CardContent>
                     </Card>
-                ) : (
+                ) : !isPending && !state?.data && (
                     <div className="flex h-full w-full min-h-[400px] flex-col items-center justify-center rounded-lg border-2 border-dashed bg-card p-8 text-center sticky top-24">
                         <Info className="h-10 w-10 text-muted-foreground mb-4" />
                         <h3 className="text-lg font-semibold text-foreground">Your AI-powered estimate will appear here.</h3>
