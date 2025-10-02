@@ -9,13 +9,66 @@ export type Pollutant = {
   Icon: LucideIcon;
 };
 
-export type AqiData = {
-  location: string;
-  aqi: number;
+// export type AqiData = {
+//   location: string;
+//   aqi: number;
+//   status: string;
+//   statusClassName: string;
+//   pollutants: Pollutant[];
+// };
+
+export interface PollutantMeasurement {
+  name: string;
+  value: number;
+  unit: string;
+}
+
+export interface AqiBreakdown {
+    name: string; // Pollutant name (e.g., "pm25")
+    aqi: number;
+}
+
+export interface AqiLocation {
+    id: number;
+    name: string;
+    coordinates: {
+        latitude: number;
+        longitude: number;
+    };
+}
+
+export interface AqiData {
+  source: string;
+  location: AqiLocation;
+  measurements: PollutantMeasurement[];
+  aqi: {
+    overall: number;
+    dominantPollutant: string | null;
+    byPollutant: AqiBreakdown[];
+    method: string;
+  };
+  // These are calculated on the frontend based on aqi.overall
   status: string;
   statusClassName: string;
-  pollutants: Pollutant[];
-};
+
+  // Keep this if your components expect it, otherwise remove it
+  // pollutantsts?: any[];
+}
+
+// This type represents the raw data from your API route
+export interface AirQualityData {
+  source: string;
+  location: AqiLocation;
+  measurements: PollutantMeasurement[];
+  aqi: {
+    overall: number;
+    dominantPollutant: string | null;
+    byPollutant: AqiBreakdown[];
+    method: string;
+  };
+  rawLocationLatest: any; // Assuming this is still part of your API response
+}
+
 
 export type Challenge = {
   id: string;
