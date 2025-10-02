@@ -1,17 +1,8 @@
-import { getAirQualityInsight } from "@/ai/flows/air-quality-insights";
-import { mockAqiData } from "@/lib/data";
+import { type AirQualityInsightOutput } from "@/ai/flows/air-quality-insights";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Sparkles } from "lucide-react";
 
-export async function AqiInsightCard() {
-  // In a real app, you'd fetch the previous week's AQI from a database.
-  const previousWeekAqi = 225;
-
-  const insightData = await getAirQualityInsight({
-    location: mockAqiData.location,
-    currentAqi: mockAqiData.aqi,
-    previousAqi: previousWeekAqi,
-  });
+export function AqiInsightCard({ insightData }: { insightData: AirQualityInsightOutput }) {
 
   return (
     <Alert className="bg-primary/10 border-primary/20 text-foreground">
