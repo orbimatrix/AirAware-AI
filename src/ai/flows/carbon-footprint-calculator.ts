@@ -8,7 +8,6 @@
  * - CarbonFootprintCalculatorOutput - The return type for the calculateCarbonFootprint function.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const CarbonFootprintCalculatorInputSchema = z.object({
@@ -33,51 +32,25 @@ export type CarbonFootprintCalculatorOutput = z.infer<typeof CarbonFootprintCalc
 export async function calculateCarbonFootprint(
     input: CarbonFootprintCalculatorInput
 ): Promise<CarbonFootprintCalculatorOutput> {
-    return carbonFootprintCalculatorFlow(input);
+    const { transport, energy, diet, consumption } = input;
+    
+    // Simplified calculation logic based on the original prompt
+    const transportEmission = (transport / 50) * 20;
+    const energyEmission = (energy / 50) * 10;
+    const dietEmission = (diet / 50) * 2.5;
+    const consumptionEmission = (consumption / 50) * 5;
+    
+    const dailyTotal = transportEmission + energyEmission + dietEmission + consumptionEmission;
+    const weeklyFootprint = dailyTotal * 7;
+
+    const tips = [
+        "Switching to LED light bulbs can significantly reduce your energy consumption.",
+        "Consider meat-free days; reducing meat intake is one of the quickest ways to lower your diet-related footprint.",
+        "Opt for public transport, cycling, or walking when possible to cut down on travel emissions.",
+    ];
+
+    return {
+        weeklyFootprint: weeklyFootprint,
+        tips: tips,
+    };
 }
-
-
-const prompt = ai.definePrompt({
-    name: 'carbonFootprintPrompt',
-    input: {schema: CarbonFootprintCalculatorInputSchema},
-    output: {schema: CarbonFootprintCalculatorOutputSchema},
-    prompt: `You are an expert environmental scientist. Your task is to estimate a user's weekly carbon footprint based on scores they provide for their lifestyle habits and give them personalized tips.
-
-    The user provides scores from 0 to 100 for four categories:
-    - Transport: 0 is rarely using vehicles, 100 is daily long commutes in a personal car.
-    - Energy: 0 is minimal energy use (e.g., solar panels, energy-efficient appliances), 100 is high usage.
-    - Diet: 0 is vegan, 50 is occasional meat, 100 is daily meat consumption.
-    - Consumption: 0 is minimalist, 100 is a frequent shopper.
-
-    Based on these scores, calculate an estimated weekly carbon footprint in kg of CO₂ equivalent. Use the following weights as a baseline for a score of 50/100 to represent an average person's DAILY emissions, then extrapolate to a weekly total.
-    - Transport (daily): 0.4 kg CO2 per score point. (e.g., score 50 = 20kg/day)
-    - Energy (daily): 0.2 kg CO2 per score point. (e.g., score 50 = 10kg/day)
-    - Diet (daily): A score of 50 represents about 2.5 kg CO2/day. Scale accordingly.
-    - Consumption (daily): 0.1 kg CO2 per score point. (e.g., score 50 = 5kg/day)
-
-    User Input:
-    - Transport Score: {{{transport}}}
-    - Energy Score: {{{energy}}}
-    - Diet Score: {{{diet}}}
-    - Consumption Score: {{{consumption}}}
-
-    First, calculate the daily total based on the scores and weights.
-    Second, multiply the daily total by 7 to get the weekly footprint.
-
-    Finally, provide 2-3 concise, actionable, and personalized tips for the user to reduce their footprint, focusing on their highest-scoring categories.
-
-    Output the final weekly footprint and the tips in the specified JSON format.
-    `,
-});
-
-const carbonFootprintCalculatorFlow = ai.defineFlow(
-    {
-        name: 'carbonFootprintCalculatorFlow',
-        inputSchema: CarbonFootprintCalculatorInputSchema,
-        outputSchema: CarbonFootprintCalculatorOutputSchema,
-    },
-    async (input) => {
-        const {output} = await prompt(input);
-        return output!;
-    }
-);

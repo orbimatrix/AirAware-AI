@@ -8,7 +8,6 @@
  * - DetectHazardZonesOutput - The return type for the detectHazardZones function.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DetectHazardZonesInputSchema = z.object({
@@ -41,42 +40,13 @@ const DetectHazardZonesOutputSchema = z.object({
 export type DetectHazardZonesOutput = z.infer<typeof DetectHazardZonesOutputSchema>;
 
 export async function detectHazardZones(input: DetectHazardZonesInput): Promise<DetectHazardZonesOutput> {
-  return detectHazardZonesFlow(input);
+  const isHazard = true; // Mock response
+  const recommendation = isHazard
+    ? "Your current area has high pollution levels. Consider moving to Gulberg, which has better air quality right now."
+    : "Your current location has safe air quality. Enjoy your activities!";
+
+  return {
+    isHazardZone: isHazard,
+    recommendation: recommendation,
+  };
 }
-
-const prompt = ai.definePrompt({
-  name: 'detectHazardZonesPrompt',
-  input: {schema: DetectHazardZonesInputSchema},
-  output: {schema: DetectHazardZonesOutputSchema},
-  prompt: `You are an AI assistant designed to identify hazard zones based on air quality data and provide recommendations.
-
-  Determine if the user's current location is a hazard zone based on the provided air quality data. A hazard zone is defined as an area with air quality exceeding safe limits for PM2.5, PM10, CO2, NO2, and O3.
-
-  If the current location is a hazard zone, recommend an alternative, less polluted area from the list of nearby areas. If the current location is not a hazard zone, inform the user that their current location is safe.
-
-  Current Location: {{{location}}}
-  Air Quality Data: {{{airQualityData}}}
-  Nearby Areas: {{{nearbyAreas}}}
-
-  Consider these factors when determining if an area is a hazard zone:
-  - PM2.5 levels above 50 μg/m³
-  - PM10 levels above 100 μg/m³
-  - CO2 levels above 1000 ppm
-  - NO2 levels above 40 ppb
-  - O3 levels above 70 ppb
-
-  Output the results in JSON format.
-  `,
-});
-
-const detectHazardZonesFlow = ai.defineFlow(
-  {
-    name: 'detectHazardZonesFlow',
-    inputSchema: DetectHazardZonesInputSchema,
-    outputSchema: DetectHazardZonesOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);

@@ -7,7 +7,6 @@
  * - PersonalizedHealthRecommendationsOutput - The return type for the personalizedHealthRecommendations function.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const PersonalizedHealthRecommendationsInputSchema = z.object({
@@ -38,37 +37,28 @@ export type PersonalizedHealthRecommendationsOutput = z.infer<
 export async function personalizedHealthRecommendations(
   input: PersonalizedHealthRecommendationsInput
 ): Promise<PersonalizedHealthRecommendationsOutput> {
-  return personalizedHealthRecommendationsFlow(input);
-}
+  
+  const { aqi, healthProfile } = input;
+  let recommendation = "Air quality is good. It's a great day for outdoor activities!";
+  let shouldAlert = false;
 
-const prompt = ai.definePrompt({
-  name: 'personalizedHealthRecommendationsPrompt',
-  input: {schema: PersonalizedHealthRecommendationsInputSchema},
-  output: {schema: PersonalizedHealthRecommendationsOutputSchema},
-  prompt: `You are an AI assistant designed to provide personalized health recommendations based on the current Air Quality Index (AQI), the user's health profile and their location. 
-
-  AQI: {{{aqi}}}
-  Location: {{{location}}}
-  Health Profile: Respiratory Issues: {{{healthProfile.respiratoryIssues}}}, Age: {{{healthProfile.age}}}, Other Conditions: {{{healthProfile.otherConditions}}}
-
-  Based on the AQI, location and the user's health profile, provide a concise and actionable health recommendation. Also, based on these conditions, determine if the user should be alerted.
-
-  Example Recommendations:
-  - If the AQI is high and the user has respiratory issues, recommend limiting outdoor activities and wearing a mask.
-  - If the AQI is moderate and the user is healthy, recommend enjoying outdoor activities with caution.
-  - If the AQI is low, recommend enjoying outdoor activities.
-  - For children and the elderly, always err on the side of caution.
-`,
-});
-
-const personalizedHealthRecommendationsFlow = ai.defineFlow(
-  {
-    name: 'personalizedHealthRecommendationsFlow',
-    inputSchema: PersonalizedHealthRecommendationsInputSchema,
-    outputSchema: PersonalizedHealthRecommendationsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  if (aqi > 150) {
+    if (healthProfile.respiratoryIssues || healthProfile.age > 60 || healthProfile.age < 5) {
+      recommendation = "Air quality is unhealthy. Given your health profile, it's strongly advised to stay indoors, use an air purifier if possible, and wear a mask if you must go out.";
+      shouldAlert = true;
+    } else {
+      recommendation = "Air quality is unhealthy. Limit prolonged outdoor exertion and consider wearing a mask if you're outside for a long time.";
+      shouldAlert = true;
+    }
+  } else if (aqi > 100) {
+    if (healthProfile.respiratoryIssues) {
+      recommendation = "Air quality is unhealthy for sensitive groups. You might want to reduce outdoor activities today.";
+      shouldAlert = true;
+    } else {
+      recommendation = "Air quality is moderate. It's generally okay for outdoor activities, but sensitive individuals should be cautious.";
+      shouldAlert = false;
+    }
   }
-);
+
+  return { recommendation, shouldAlert };
+}
