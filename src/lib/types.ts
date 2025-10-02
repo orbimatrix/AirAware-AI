@@ -21,7 +21,7 @@ export type AqiData = {
 export type Challenge = {
   id: string;
   title: string;
-  description: string;
+  description:string;
   points: number;
   icon: LucideIcon;
 };
@@ -31,6 +31,7 @@ export type Badge = {
   name: string;
   description: string;
   icon: LucideIcon;
+  pointsToUnlock: number;
 }
 
 export type LeaderboardUser = {
@@ -39,7 +40,6 @@ export type LeaderboardUser = {
   score: number;
   avatarUrl: string;
   avatarFallback: string;
-  earnedBadges?: string[]; // Array of badge IDs
 };
 
 export const ReportSeverityEnum = z.enum(['Low', 'Medium', 'High']);

@@ -1,5 +1,5 @@
 import type { AqiData, Challenge, LeaderboardUser, Badge } from "@/lib/types";
-import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Footprints } from "lucide-react";
+import { Wind, Gauge, Droplets, Mountain, Leaf, Tractor, Trees, Award, Star, Shield, Footprints, Gem } from "lucide-react";
 
 export const mockAqiData: AqiData = {
   location: "Lahore, Pakistan",
@@ -55,15 +55,16 @@ export const mockChallenges: Challenge[] = [
 ];
 
 export const mockBadges: Badge[] = [
-  { id: "b1", name: "First Steps", description: "Complete your first challenge.", icon: Star },
-  { id: "b2", name: "Eco-Warrior", description: "Complete 5 challenges.", icon: Shield },
-  { id: "b3", name: "Community Hero", description: "Reach the top 3 on the leaderboard.", icon: Award },
+  { id: "b1", name: "Eco-Novice", description: "Earned at 50 points. Welcome to the movement!", icon: Star, pointsToUnlock: 50 },
+  { id: "b2", name: "Planet Protector", description: "Earned at 200 points. You're making a real difference!", icon: Shield, pointsToUnlock: 200 },
+  { id: "b3", name: "Green Guru", description: "Earned at 500 points. A true champion for the Earth!", icon: Award, pointsToUnlock: 500 },
+  { id: "b4", name: "Climate Champion", description: "Earned at 1000 points. Your impact is legendary!", icon: Gem, pointsToUnlock: 1000 },
 ];
 
 export const mockLeaderboard: LeaderboardUser[] = [
-  { rank: 1, name: "Ayesha Khan", score: 2500, avatarUrl: "https://picsum.photos/seed/user2/40/40", avatarFallback: "AK", earnedBadges: ["b1", "b2", "b3"] },
-  { rank: 2, name: "Bilal Ahmed", score: 2350, avatarUrl: "https://picsum.photos/seed/user3/40/40", avatarFallback: "BA", earnedBadges: ["b1", "b2"] },
-  { rank: 3, name: "Fatima Ali", score: 2200, avatarUrl: "https://picsum.photos/seed/user4/40/40", avatarFallback: "FA", earnedBadges: ["b1", "b2"] },
-  { rank: 4, name: "You", score: 2150, avatarUrl: "https://picsum.photos/seed/user1/40/40", avatarFallback: "UP", earnedBadges: ["b1"] },
-  { rank: 5, name: "Usman Tariq", score: 1900, avatarUrl: "https://picsum.photos/seed/user5/40/40", avatarFallback: "UT", earnedBadges: ["b1"] },
+  { rank: 1, name: "Ayesha Khan", score: 520, avatarUrl: "https://picsum.photos/seed/user2/40/40", avatarFallback: "AK" },
+  { rank: 2, name: "Bilal Ahmed", score: 480, avatarUrl: "https://picsum.photos/seed/user3/40/40", avatarFallback: "BA" },
+  { rank: 3, name: "Fatima Ali", score: 350, avatarUrl: "https://picsum.photos/seed/user4/40/40", avatarFallback: "FA" },
+  { rank: 4, name: "You", score: 0, avatarUrl: "https://picsum.photos/seed/user1/40/40", avatarFallback: "UP" },
+  { rank: 5, name: "Usman Tariq", score: 150, avatarUrl: "https://picsum.photos/seed/user5/40/40", avatarFallback: "UT" },
 ];

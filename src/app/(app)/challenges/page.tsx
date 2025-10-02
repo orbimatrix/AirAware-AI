@@ -18,12 +18,12 @@ export default function ChallengesPage() {
       <div className="grid gap-12 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
           <div>
-            <h2 className="text-2xl font-bold font-headline mb-4">Available Challenges</h2>
-            <ChallengeList />
-          </div>
-          <div>
             <h2 className="text-2xl font-bold font-headline mb-4">My Badges</h2>
             <MyBadges />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold font-headline mb-4">Available Challenges</h2>
+            <ChallengeList />
           </div>
         </div>
         <div className="lg:col-span-1">
