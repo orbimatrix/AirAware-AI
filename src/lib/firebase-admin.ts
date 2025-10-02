@@ -1,17 +1,18 @@
+
 import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
-import { firebaseConfig } from '@/firebase/config';
 
 async function getAuthenticatedAppForUser() {
   const idToken = await getIdToken();
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
   if (!idToken) {
     const app =
       getApps().find((a) => a.name === 'unauthenticated-session') ||
       initializeApp(
         {
-          projectId: firebaseConfig.projectId,
+          projectId: projectId,
         },
         'unauthenticated-session'
       );
@@ -22,7 +23,7 @@ async function getAuthenticatedAppForUser() {
     getApps().find((a) => a.name === idToken.uid) ||
     initializeApp(
       {
-        projectId: firebaseConfig.projectId,
+        projectId: projectId,
       },
       idToken.uid
     );
@@ -35,11 +36,13 @@ async function getIdToken() {
   const session = cookieStore.get('firebase-session-cookie')?.value || '';
   if (!session) return null;
 
+  const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
   const app =
     getApps().find((a) => a.name === 'auth-session') ||
     initializeApp(
       {
-        projectId: firebaseConfig.projectId,
+        projectId: projectId,
       },
       'auth-session'
     );
