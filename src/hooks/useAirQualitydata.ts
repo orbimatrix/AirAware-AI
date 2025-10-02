@@ -5,14 +5,14 @@ import { useState, useEffect } from 'react';
 interface AirQualityData {
   aqi: number;
   components: {
-    co: number;
-    no: number;
-    no2: number;
-    o3: number;
-    so2: number;
-    pm2_5: number;
-    pm10: number;
-    nh3: number;
+    co?: number;
+    no?: number;
+    no2?: number;
+    o3?: number;
+    so2?: number;
+    pm2_5?: number;
+    pm10?: number;
+    nh3?: number;
   };
   dt: number;
 }
@@ -49,9 +49,9 @@ export function useAirQualityData(lat: number | null, lon: number | null): UseAi
         if (result.list && result.list.length > 0) {
             const apiData = result.list[0];
             setData({
-                aqi: apiData.main.aqi,
-                components: apiData.components,
-                dt: apiData.dt
+                aqi: apiData.main.aqi ?? 0,
+                components: apiData.components ?? {},
+                dt: apiData.dt ?? 0
             });
         } else {
             throw new Error("No air quality data found for the location.")

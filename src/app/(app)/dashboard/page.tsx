@@ -1,3 +1,4 @@
+
 "use client";
 
 import { AqiSummaryCard } from "@/components/dashboard/aqi-summary-card";
@@ -9,9 +10,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getAirQualityInsight, AirQualityInsightOutput } from "@/ai/flows/air-quality-insights";
 import { useAirQualityData } from "@/hooks/useAirQualitydata";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, MapPin } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AqiData, Pollutant } from "@/lib/types";
+import { AqiData } from "@/lib/types";
 import { Wind, Gauge, Droplets } from "lucide-react";
 
 
@@ -59,16 +60,28 @@ export default function DashboardPage() {
 
   const { data: aqData, loading: loadingAq, error: errorAq } = useAirQualityData(location?.lat ?? null, location?.lon ?? null);
 
+  const fetchCityName = async (lat: number, lon: number) => {
+    try {
+        const response = await fetch(`/api/reverse-geo?lat=${lat}&lon=${lon}`);
+        if (!response.ok) {
+            throw new Error("Failed to fetch city name");
+        }
+        const data = await response.json();
+        const cityName = data[0]?.name || 'Unknown Location';
+        setLocation({ lat, lon, name: cityName });
+    } catch (error) {
+        console.error("Reverse geocoding error:", error);
+        // Fallback to "your current location" if city lookup fails
+        setLocation({ lat, lon, name: 'your current location' });
+    }
+  }
+
   const handleGetLocation = () => {
     setLocationError(null);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lon: position.coords.longitude,
-            name: "your current location"
-          });
+          fetchCityName(position.coords.latitude, position.coords.longitude);
         },
         (error) => {
           setLocationError(`Error: ${error.message}. Please enable location services.`);
@@ -88,8 +101,7 @@ export default function DashboardPage() {
       if (!aqData?.aqi) return;
       try {
         setLoadingInsight(true);
-        // In a real app, you'd fetch the previous week's AQI from a database.
-        const previousWeekAqi = 3; // Corresponds to Moderate
+        const previousWeekAqi = 3; 
         const insightData = await getAirQualityInsight({
           location: location?.name ?? 'your city',
           currentAqi: aqData.aqi,
@@ -160,12 +172,16 @@ export default function DashboardPage() {
         </div>
       )
   }
+  
+  const description = location 
+    ? `Real-time air quality for ${location.name} (Lat: ${location.lat.toFixed(4)}, Lon: ${location.lon.toFixed(4)})`
+    : "Real-time air quality for your location.";
 
   return (
     <div className="space-y-8">
       <PageHeader
         title="Dashboard"
-        description={`Real-time air quality for ${transformedData.location}.`}
+        description={description}
       />
       <Suspense fallback={<InsightCardSkeleton />}>
         {loadingInsight ? <InsightCardSkeleton /> : (insight && <AqiInsightCard insightData={insight} />)}
