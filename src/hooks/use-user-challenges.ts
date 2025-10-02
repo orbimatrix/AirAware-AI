@@ -1,11 +1,18 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from 'react';
 
+export type AcceptedChallenge = {
+    id: string;
+    date: string; // ISO string
+    note: string;
+}
+
 const STORAGE_KEY = 'userAcceptedChallenges';
 
-export function useUserChallenges(initialChallenges: string[] = []) {
-  const [acceptedChallenges, setAcceptedChallenges] = useState<string[]>(initialChallenges);
+export function useUserChallenges(initialChallenges: AcceptedChallenge[] = []) {
+  const [acceptedChallenges, setAcceptedChallenges] = useState<AcceptedChallenge[]>(initialChallenges);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -20,7 +27,7 @@ export function useUserChallenges(initialChallenges: string[] = []) {
     setIsLoaded(true);
   }, []);
 
-  const saveChallenges = useCallback((newChallenges: string[]) => {
+  const saveChallenges = useCallback((newChallenges: AcceptedChallenge[]) => {
     try {
       const jsonValue = JSON.stringify(newChallenges);
       window.localStorage.setItem(STORAGE_KEY, jsonValue);
@@ -30,15 +37,21 @@ export function useUserChallenges(initialChallenges: string[] = []) {
     }
   }, []);
 
-  const acceptChallenge = useCallback((challengeId: string) => {
-    if (!isLoaded || acceptedChallenges.includes(challengeId)) return;
+  const acceptChallenge = useCallback((challengeId: string, note: string) => {
+    if (!isLoaded || acceptedChallenges.some(c => c.id === challengeId)) return;
     
-    const updatedChallenges = [...acceptedChallenges, challengeId];
+    const newChallenge: AcceptedChallenge = {
+        id: challengeId,
+        date: new Date().toISOString(),
+        note: note,
+    }
+
+    const updatedChallenges = [...acceptedChallenges, newChallenge];
     saveChallenges(updatedChallenges);
   }, [acceptedChallenges, saveChallenges, isLoaded]);
 
   const isChallengeAccepted = (challengeId: string) => {
-    return acceptedChallenges.includes(challengeId);
+    return acceptedChallenges.some(c => c.id === challengeId);
   }
 
   return { acceptedChallenges, acceptChallenge, isChallengeAccepted, isLoaded };
