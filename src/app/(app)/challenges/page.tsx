@@ -2,6 +2,7 @@ import { ChallengeList } from "@/components/challenges/challenge-list";
 import { Leaderboard } from "@/components/challenges/leaderboard";
 import { MyBadges } from "@/components/challenges/my-badges";
 import { PageHeader } from "@/components/page-header";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata = {
   title: "Eco-Challenges",
@@ -26,7 +27,12 @@ export default function ChallengesPage() {
           </div>
         </div>
         <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Leaderboard</CardTitle>
+            </CardHeader>
             <Leaderboard />
+          </Card>
         </div>
       </div>
     </div>
