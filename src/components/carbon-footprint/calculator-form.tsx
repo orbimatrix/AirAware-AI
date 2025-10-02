@@ -1,6 +1,7 @@
+
 'use client'
 
-import { useFormStatus, useActionState } from 'react-dom';
+import { useFormStatus, useFormState } from 'react-dom';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -71,7 +72,7 @@ export function CalculatorForm() {
   });
 
   const initialState = { data: null, error: null };
-  const [state, formAction] = useActionState(getWeeklyFootprint, initialState);
+  const [state, formAction] = useFormState(getWeeklyFootprint, initialState);
   
   const { history, addEntry } = useFootprintHistory();
 
