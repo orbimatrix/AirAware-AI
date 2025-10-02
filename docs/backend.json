@@ -1,0 +1,118 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user profile within the Saaf Hawa application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "User's chosen username."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "dateOfBirth": {
+          "type": "string",
+          "description": "User's date of birth.",
+          "format": "date-time"
+        },
+        "location": {
+          "type": "string",
+          "description": "User's current location (e.g., city, region)."
+        },
+        "respiratoryCondition": {
+          "type": "string",
+          "description": "Any respiratory conditions the user may have (e.g., asthma, COPD)."
+        },
+        "airQualityPreference": {
+          "type": "string",
+          "description": "User's preferred air quality index (e.g., PM2.5, PM10)."
+        },
+        "preferredLanguage": {
+          "type": "string",
+          "description": "User's preferred language for the application (e.g., English, Urdu)."
+        },
+        "ecoChallengeScore": {
+          "type": "number",
+          "description": "User's score in gamified eco-challenges."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "firstName",
+        "lastName",
+        "dateOfBirth",
+        "location",
+        "respiratoryCondition",
+        "airQualityPreference",
+        "preferredLanguage",
+        "ecoChallengeScore"
+      ]
+    },
+    "Login": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Login",
+      "type": "object",
+      "description": "Represents a user login data.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Login entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "User's chosen username."
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/profile",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information.  Uses path-based ownership for simple security rules based on request.auth.uid. Enforces ownership invariants.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user, corresponding to their Firebase Authentication UID."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to securely manage user profiles and login data within the Saaf Hawa application. The primary focus is on maintaining Authorization Independence and enabling secure list operations (QAPs).  User profiles are stored under the `/users/{userId}/profile` path, ensuring path-based ownership and simplified security rules. The `Login` entity has been omitted because firebase auth natively handles authentication, and attempting to replicate that data adds risk to security and data integrity. Authorization Independence is achieved by relying on `request.auth.uid` and the path-based ownership, eliminating the need for `get()` calls in security rules. This structure supports secure list operations because each user's data is isolated under their own path, preventing unauthorized access to other users' profiles. This structure promotes clarity and debuggability, conforming to DBAC principles by using path-based ownership instead of custom claims."
+  }
+}
