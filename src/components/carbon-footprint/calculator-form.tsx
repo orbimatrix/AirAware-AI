@@ -69,6 +69,17 @@ export function CalculatorForm() {
   
   const { history, addEntry } = useFootprintHistory();
 
+  const onSubmit = (data: FormValues) => {
+    const formData = new FormData();
+    Object.entries(data).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    });
+    formAction(formData);
+  };
+
+
   useEffect(() => {
     if (state.data) {
       addEntry({
@@ -85,7 +96,7 @@ export function CalculatorForm() {
         <div className="grid gap-8 lg:grid-cols-2">
             <Card className="self-start">
                 <Form {...form}>
-                    <form action={formAction}>
+                    <form onSubmit={form.handleSubmit(onSubmit)}>
                         <CardHeader>
                             <CardTitle>Detailed Lifestyle Inputs</CardTitle>
                             <CardDescription>Provide monthly data for an annual footprint estimate.</CardDescription>
