@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 
 export type FootprintHistoryEntry = {
     date: string; // ISO string
-    footprint: number;
+    footprint: number; // Annual footprint in tonnes
 };
 
 const STORAGE_KEY = 'footprintHistory';
@@ -45,17 +45,8 @@ export function useFootprintHistory(initialHistory: FootprintHistoryEntry[] = []
   const addEntry = useCallback((newEntry: FootprintHistoryEntry) => {
     if(!isLoaded) return;
     
-    // Check if an entry for the same day already exists
-    const entryExists = history.some(entry => entry.date === newEntry.date);
-    
-    let updatedHistory;
-    if (entryExists) {
-        // Replace the existing entry for today
-        updatedHistory = history.map(entry => entry.date === newEntry.date ? newEntry : entry);
-    } else {
-        // Add the new entry
-        updatedHistory = [...history, newEntry];
-    }
+    // An entry is for a specific calculation time, so we just add it
+    const updatedHistory = [...history, newEntry];
     saveHistory(updatedHistory);
   }, [history, saveHistory, isLoaded]);
 

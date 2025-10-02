@@ -7,15 +7,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  ResponsiveContainer,
 } from "recharts"
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import {
   ChartContainer,
   ChartTooltipContent,
@@ -24,7 +18,7 @@ import { FootprintHistoryEntry } from "@/hooks/use-footprint-history"
 
 const chartConfig = {
   footprint: {
-    label: "CO₂ Footprint",
+    label: "CO₂e Footprint (tonnes)",
     color: "hsl(var(--primary))",
   },
 }
@@ -44,7 +38,8 @@ export function HistoryChart({ data }: HistoryChartProps) {
 
   return (
     <div className="h-[250px] w-full">
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} className="h-full w-full">
+          <ResponsiveContainer>
             <AreaChart
                 accessibilityLayer
                 data={data}
@@ -68,11 +63,12 @@ export function HistoryChart({ data }: HistoryChartProps) {
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
-                    domain={['dataMin - 10', 'dataMax + 10']}
+                    domain={['dataMin - 1', 'dataMax + 1']}
+                    unit="t"
                 />
                 <Tooltip
                     cursor={false}
-                    content={<ChartTooltipContent indicator="dot" />}
+                    content={<ChartTooltipContent indicator="dot" formatter={(value) => `${Number(value).toFixed(2)} tonnes`}/>}
                 />
                 <defs>
                     <linearGradient id="fillFootprint" x1="0" y1="0" x2="0" y2="1">
@@ -94,8 +90,10 @@ export function HistoryChart({ data }: HistoryChartProps) {
                     fill="url(#fillFootprint)"
                     stroke="var(--color-footprint)"
                     stackId="a"
+                    name="Annual Footprint"
                 />
             </AreaChart>
+          </ResponsiveContainer>
         </ChartContainer>
     </div>
   )
