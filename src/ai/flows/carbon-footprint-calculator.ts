@@ -10,28 +10,19 @@
 
 import {z} from 'genkit';
 
-export const CarbonFootprintCalculatorInputSchema = z.object({
-  // Housing & Energy
-  householdSize: z.coerce.number().min(1),
-  electricityKwh: z.coerce.number().min(0).describe("Monthly electricity usage in kWh."),
-  naturalGasM3: z.coerce.number().min(0).describe("Monthly natural gas usage in cubic meters."),
-  heatingOilL: z.coerce.number().min(0).describe("Monthly heating oil usage in litres."),
-  
-  // Transport
-  carKm: z.coerce.number().min(0).describe("Monthly distance driven by car in km."),
-  carFuelType: z.enum(['petrol', 'diesel', 'electric']),
-  carFuelEconomy: z.coerce.number().min(0).describe("Car's fuel economy in L/100km for petrol/diesel, or kWh/100km for electric."),
-  
-  flightsShort: z.coerce.number().min(0).describe("Number of short-haul return flights per year."),
-  flightsLong: z.coerce.number().min(0).describe("Number of long-haul return flights per year."),
-
-  // Diet
-  diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
-  
-  // Waste
-  wasteKg: z.coerce.number().min(0).describe("Weekly non-recycled waste in kg."),
-});
-export type CarbonFootprintCalculatorInput = z.infer<typeof CarbonFootprintCalculatorInputSchema>;
+export type CarbonFootprintCalculatorInput = z.infer<z.ZodObject<{
+  householdSize: z.ZodNumber;
+  electricityKwh: z.ZodNumber;
+  naturalGasM3: z.ZodNumber;
+  heatingOilL: z.ZodNumber;
+  carKm: z.ZodNumber;
+  carFuelType: z.ZodEnum<['petrol', 'diesel', 'electric']>;
+  carFuelEconomy: z.ZodNumber;
+  flightsShort: z.ZodNumber;
+  flightsLong: z.ZodNumber;
+  diet: z.ZodEnum<['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']>;
+  wasteKg: z.ZodNumber;
+}>>;
 
 const CarbonFootprintCalculatorOutputSchema = z.object({
   totalFootprint: z

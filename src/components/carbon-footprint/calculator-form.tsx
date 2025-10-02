@@ -15,8 +15,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '../ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CarbonFootprintCalculatorInputSchema } from '@/ai/flows/carbon-footprint-calculator';
-import type { z } from 'zod';
+import { z } from 'zod';
+
+const CarbonFootprintCalculatorInputSchema = z.object({
+  // Housing & Energy
+  householdSize: z.coerce.number().min(1),
+  electricityKwh: z.coerce.number().min(0).describe("Monthly electricity usage in kWh."),
+  naturalGasM3: z.coerce.number().min(0).describe("Monthly natural gas usage in cubic meters."),
+  heatingOilL: z.coerce.number().min(0).describe("Monthly heating oil usage in litres."),
+  
+  // Transport
+  carKm: z.coerce.number().min(0).describe("Monthly distance driven by car in km."),
+  carFuelType: z.enum(['petrol', 'diesel', 'electric']),
+  carFuelEconomy: z.coerce.number().min(0).describe("Car's fuel economy in L/100km for petrol/diesel, or kWh/100km for electric."),
+  
+  flightsShort: z.coerce.number().min(0).describe("Number of short-haul return flights per year."),
+  flightsLong: z.coerce.number().min(0).describe("Number of long-haul return flights per year."),
+
+  // Diet
+  diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
+  
+  // Waste
+  wasteKg: z.coerce.number().min(0).describe("Weekly non-recycled waste in kg."),
+});
 
 type FormValues = z.infer<typeof CarbonFootprintCalculatorInputSchema>;
 

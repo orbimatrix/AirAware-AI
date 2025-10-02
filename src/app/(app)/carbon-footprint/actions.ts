@@ -2,9 +2,23 @@
 
 import {
   calculateCarbonFootprint,
-  CarbonFootprintCalculatorInputSchema,
   CarbonFootprintCalculatorOutput,
 } from "@/ai/flows/carbon-footprint-calculator";
+import { z } from "zod";
+
+const CarbonFootprintCalculatorInputSchema = z.object({
+  householdSize: z.coerce.number().min(1),
+  electricityKwh: z.coerce.number().min(0),
+  naturalGasM3: z.coerce.number().min(0),
+  heatingOilL: z.coerce.number().min(0),
+  carKm: z.coerce.number().min(0),
+  carFuelType: z.enum(['petrol', 'diesel', 'electric']),
+  carFuelEconomy: z.coerce.number().min(0),
+  flightsShort: z.coerce.number().min(0),
+  flightsLong: z.coerce.number().min(0),
+  diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
+  wasteKg: z.coerce.number().min(0),
+});
 
 type FootprintState = {
   data: CarbonFootprintCalculatorOutput | null;
