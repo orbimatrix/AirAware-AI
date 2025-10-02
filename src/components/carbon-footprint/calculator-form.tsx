@@ -1,8 +1,7 @@
 
 'use client'
 
-import { useFormState } from 'react-dom';
-import { useEffect } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -20,30 +19,23 @@ import { z } from 'zod';
 import { CarbonFootprintCalculatorInput } from '@/ai/flows/carbon-footprint-calculator';
 
 const CarbonFootprintCalculatorInputSchema = z.object({
-  // Housing
   householdSize: z.coerce.number().min(1),
+  // Housing
   electricityKwh: z.coerce.number().min(0),
   naturalGasM3: z.coerce.number().min(0),
   heatingOilL: z.coerce.number().min(0),
-  
   // Transport
   carKm: z.coerce.number().min(0),
   carFuelType: z.enum(['petrol', 'diesel', 'electric']),
   carFuelEconomy: z.coerce.number().min(0),
-  motorbikeKm: z.coerce.number().min(0),
-  publicBusKm: z.coerce.number().min(0),
-  publicTrainKm: z.coerce.number().min(0),
   flightsShort: z.coerce.number().min(0),
   flightsLong: z.coerce.number().min(0),
-
   // Diet
   diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
-  
-  // Goods & Waste
+  // Waste
   wasteKg: z.coerce.number().min(0),
-  clothingItems: z.coerce.number().min(0),
-  electronicsSpend: z.coerce.number().min(0),
 });
+
 
 type FormValues = z.infer<typeof CarbonFootprintCalculatorInputSchema>;
 
@@ -68,20 +60,15 @@ export function CalculatorForm() {
       carKm: 400,
       carFuelType: 'petrol',
       carFuelEconomy: 8,
-      motorbikeKm: 0,
-      publicBusKm: 20,
-      publicTrainKm: 0,
       flightsShort: 1,
       flightsLong: 0,
       diet: 'omnivore',
       wasteKg: 4,
-      clothingItems: 5,
-      electronicsSpend: 50,
     },
   });
 
   const initialState = { data: null, error: null };
-  const [state, formAction] = useFormState(getWeeklyFootprint, initialState);
+  const [state, formAction] = useActionState(getWeeklyFootprint, initialState);
   
   const { history, addEntry } = useFootprintHistory();
 
@@ -138,15 +125,6 @@ export function CalculatorForm() {
                                         <FormField control={form.control} name="carFuelEconomy" render={({ field }) => (
                                             <FormItem><Label>Car Fuel Economy (L or kWh / 100km)</Label><FormControl><Input type="number" placeholder="e.g., 8" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
-                                         <FormField control={form.control} name="motorbikeKm" render={({ field }) => (
-                                            <FormItem><Label>Monthly Distance by Motorbike (km)</Label><FormControl><Input type="number" placeholder="e.g., 0" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={form.control} name="publicBusKm" render={({ field }) => (
-                                            <FormItem><Label>Monthly Distance by Public Bus (km)</Label><FormControl><Input type="number" placeholder="e.g., 20" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={form.control} name="publicTrainKm" render={({ field }) => (
-                                            <FormItem><Label>Monthly Distance by Train (km)</Label><FormControl><Input type="number" placeholder="e.g., 0" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
                                          <FormField control={form.control} name="flightsShort" render={({ field }) => (
                                             <FormItem><Label>Short-Haul Return Flights (per year)</Label><FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl><FormDescription>Flights under 3 hours.</FormDescription><FormMessage /></FormItem>
                                         )} />
@@ -166,16 +144,10 @@ export function CalculatorForm() {
                                 </AccordionItem>
 
                                  <AccordionItem value="goods">
-                                    <AccordionTrigger className="text-lg font-semibold"><ShoppingBag className="mr-2 h-5 w-5 text-primary" />Goods, Services & Waste</AccordionTrigger>
+                                    <AccordionTrigger className="text-lg font-semibold"><Trash2 className="mr-2 h-5 w-5 text-primary" />Waste</AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="wasteKg" render={({ field }) => (
                                             <FormItem><Label>Weekly Non-Recycled Household Waste (kg)</Label><FormControl><Input type="number" placeholder="e.g., 4" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={form.control} name="clothingItems" render={({ field }) => (
-                                            <FormItem><Label>New Clothing Items (per month)</Label><FormControl><Input type="number" placeholder="e.g., 2" {...field} /></FormControl><FormMessage /></FormItem>
-                                        )} />
-                                        <FormField control={form.control} name="electronicsSpend" render={({ field }) => (
-                                            <FormItem><Label>Electronics Spend (USD per month)</Label><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                     </AccordionContent>
                                 </AccordionItem>
@@ -257,5 +229,7 @@ export function CalculatorForm() {
     </div>
   );
 }
+
+    
 
     
