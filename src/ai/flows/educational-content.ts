@@ -24,33 +24,33 @@ export type EducationalContentOutput = z.infer<typeof EducationalContentOutputSc
 
 const mockContent: Record<string, EducationalContentOutput> = {
     "Pollution Reduction": {
-        title: "Simple Steps to Cleaner Air in Your City",
-        summary: "Air pollution is a major concern, but small, collective actions can lead to significant improvements. Discover how you can contribute to a healthier environment right from your doorstep.",
+        title: "Breathe Easy: Practical Steps to Reduce Air Pollution",
+        summary: "Air pollution is a pressing issue in urban areas like Lahore, but collective action can create a significant impact. From your daily commute to household habits, discover how your choices can contribute to cleaner air for everyone.",
         keyTakeaways: [
-            "Opt for public transport, cycling, or walking to reduce traffic emissions.",
-            "Conserve energy at home; less power consumption means fewer emissions from power plants.",
-            "Avoid burning trash, as it releases harmful pollutants directly into the air.",
-            "Support local businesses that prioritize sustainable practices.",
+            "Embrace Green Commuting: Opt for walking, cycling, or public transport. Carpooling for work or school runs significantly cuts down on vehicle emissions, a primary source of urban PM2.5 pollution.",
+            "Conserve Energy at Home: Reduce electricity usage by switching to LED bulbs, unplugging electronics when not in use, and using energy-efficient appliances. Lower energy demand means fewer emissions from power plants.",
+            "Stop Open Burning: Avoid burning household trash, leaves, or agricultural waste. This practice releases a cocktail of harmful pollutants, including dioxins and particulate matter, directly into the air you breathe.",
+            "Support Clean Air Initiatives: Advocate for and support local policies that promote renewable energy, better public transport, and stricter industrial emission standards. Your voice can drive large-scale change."
         ]
     },
     "Sustainable Living": {
-        title: "Live Green: Easy Swaps for a Sustainable Lifestyle",
-        summary: "Sustainable living is about making conscious choices that reduce your environmental impact. It's easier than you think to start making a difference today.",
+        title: "A Greener Tomorrow: Simple Swaps for a Sustainable Life",
+        summary: "Sustainable living is about making conscious choices to reduce your personal environmental footprint. It's a journey of small, manageable changes that add up to a large, positive impact on the planet.",
         keyTakeaways: [
-            "Use reusable bags, water bottles, and coffee cups to minimize plastic waste.",
-            "Reduce food waste by planning meals and composting scraps.",
-            "Choose products with minimal packaging to decrease landfill burden.",
-            "Repair items instead of replacing them to save resources and money.",
+            "Mind Your Waste: Practice the 3 R's—Reduce, Reuse, Recycle. Minimize single-use plastics by carrying reusable bottles, bags, and containers. Compost kitchen scraps to reduce landfill waste and enrich soil.",
+            "Eat Sustainably: Reduce your consumption of red meat, as livestock farming has a high environmental footprint. Prioritize locally-sourced, seasonal produce to reduce food miles and support local economies.",
+            "Shop Consciously: Before buying new, ask if you can borrow, repair, or buy second-hand. When you do buy, choose products from companies with transparent and ethical supply chains and minimal packaging.",
+            "Conserve Water: Simple acts like fixing leaky faucets, taking shorter showers, and only running full loads of laundry can save hundreds of liters of water each month, preserving this vital resource."
         ]
     },
     "Climate Change": {
-        title: "Understanding Climate Change and Your Role",
-        summary: "Climate change is a global challenge, but individual and community actions are crucial. Learn the basics and how you can be part of the solution.",
+        title: "Our Planet, Our Future: Understanding and Acting on Climate Change",
+        summary: "Climate change, driven by human activities, is altering our world's ecosystems and weather patterns. Understanding the science is the first step to becoming an effective part of the global solution.",
         keyTakeaways: [
-            "Global temperatures are rising due to increased greenhouse gases from human activities.",
-            "Conserving energy and reducing your carbon footprint are the most effective personal actions.",
-            "Protecting and planting trees helps absorb CO2, a key greenhouse gas.",
-            "Advocating for renewable energy sources can drive large-scale change.",
+            "Know The Source: The primary driver of climate change is the emission of greenhouse gases (like CO2) from burning fossil fuels for energy, industry, and transportation.",
+            "Global Impact, Local Effects: Rising global temperatures lead to more extreme weather events, including heatwaves, floods, and droughts, which disproportionately affect vulnerable regions like Pakistan.",
+            "The Power of Sinks: Natural carbon sinks like forests and oceans are crucial for absorbing CO2. Protecting and restoring these ecosystems, through reforestation and conservation, is as important as cutting emissions.",
+            "Individual Action Matters: Your carbon footprint is your personal contribution. By reducing energy consumption, adopting a plant-rich diet, and advocating for renewable energy, you directly contribute to the solution."
         ]
     }
 }

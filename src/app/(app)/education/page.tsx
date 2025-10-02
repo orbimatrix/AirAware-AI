@@ -43,7 +43,7 @@ export default function EducationPage() {
         description="AI-curated articles to help you understand key environmental topics."
       />
       <Tabs defaultValue={topics[0]} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-3 h-auto sm:h-10">
           {topics.map(topic => (
             <TabsTrigger key={topic} value={topic}>{topic}</TabsTrigger>
           ))}
