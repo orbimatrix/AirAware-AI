@@ -11,11 +11,11 @@ export function CtaFooter() {
           Ready to Take Control of Your Air Quality?
         </h2>
         <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
-          Join thousands of others in Pakistan taking steps towards a healthier life and a cleaner environment. Access all features now.
+          Join thousands of others in Pakistan taking steps towards a healthier life and a cleaner environment. Sign up for free to access all features.
         </p>
         <div className="mt-8">
           <Button asChild size="lg">
-            <Link href="/dashboard">Go to the App</Link>
+            <Link href="/signup">Get Started Now</Link>
           </Button>
         </div>
       </div>

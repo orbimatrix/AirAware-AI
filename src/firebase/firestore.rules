@@ -1,0 +1,57 @@
+/**
+ * @fileoverview Firestore Security Rules for Saaf Hawa application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for profile data.
+ * Users can only read and write their own profile information.
+ *
+ * Data Structure:
+ * All user profile data is nested under /users/{userId}/profile.
+ *
+ * Key Security Decisions:
+ * - User listing is implicitly disallowed by the data structure and rules.
+ * - The Login entity was removed as Firebase Auth is already handling authentication
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Controls access to user profile documents.
+     * @path /users/{userId}/profile
+     * @allow (create) - User with UID 'user123' can create their profile at /users/user123/profile if the profile's 'id' field matches 'user123'.
+     * @allow (get) - User with UID 'user456' can read their profile at /users/user456/profile.
+     * @allow (update) - User with UID 'user789' can update their profile at /users/user789/profile, ensuring the 'id' field remains unchanged.
+     * @allow (delete) - User with UID 'user901' can delete their profile at /users/user901/profile.
+     * @deny (create) - User with UID 'user123' cannot create a profile at /users/user456/profile (mismatched userId).
+     * @deny (get) - User with UID 'user456' cannot read the profile at /users/user789/profile (mismatched userId).
+     * @deny (update) - User with UID 'user789' cannot update the profile at /users/user456/profile (mismatched userId).
+     * @deny (delete) - User with UID 'user901' cannot delete the profile at /users/user456/profile (mismatched userId).
+     * @principle Enforces document ownership for all operations; validates path-based ownership and immutability of the 'id' field on updates.
+     */
+    match /users/{userId}/profile {
+      // Helper function to check if the authenticated user is the owner of the document.
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
+      // Helper function to check if the authenticated user is the owner of the EXISTING document.
+      function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+      }
+
+      // Allow anyone to read a profile if they are authenticated and are the owner
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+
+      // Allow a user to create their own profile, but enforce that the 'id' field matches their UID.
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+
+      // Allow a user to update their own profile, but ensure the 'id' field remains unchanged.
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+
+      // Allow a user to delete their own profile
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}

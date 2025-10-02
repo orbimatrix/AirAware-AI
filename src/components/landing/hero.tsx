@@ -19,7 +19,7 @@ export function Hero() {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
               <Button asChild size="lg">
-                <Link href="/dashboard">Check Air Quality Now</Link>
+                <Link href="/signup">Get Started for Free</Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href="#features">Learn More</Link>
