@@ -10,21 +10,26 @@
 
 import {z} from 'genkit';
 
-const CarbonFootprintCalculatorInputSchema = z.object({
-  householdSize: z.number().min(1),
-  electricityKwh: z.number().min(0).describe("Monthly electricity usage in kWh."),
-  naturalGasM3: z.number().min(0).describe("Monthly natural gas usage in cubic meters."),
-  heatingOilL: z.number().min(0).describe("Monthly heating oil usage in litres."),
+export const CarbonFootprintCalculatorInputSchema = z.object({
+  // Housing & Energy
+  householdSize: z.coerce.number().min(1),
+  electricityKwh: z.coerce.number().min(0).describe("Monthly electricity usage in kWh."),
+  naturalGasM3: z.coerce.number().min(0).describe("Monthly natural gas usage in cubic meters."),
+  heatingOilL: z.coerce.number().min(0).describe("Monthly heating oil usage in litres."),
   
-  carKm: z.number().min(0).describe("Monthly distance driven by car in km."),
+  // Transport
+  carKm: z.coerce.number().min(0).describe("Monthly distance driven by car in km."),
   carFuelType: z.enum(['petrol', 'diesel', 'electric']),
-  carFuelEconomy: z.number().min(0).describe("Car's fuel economy in L/100km for petrol/diesel, or kWh/100km for electric."),
+  carFuelEconomy: z.coerce.number().min(0).describe("Car's fuel economy in L/100km for petrol/diesel, or kWh/100km for electric."),
   
-  flightsShort: z.number().min(0).describe("Number of short-haul return flights per year."),
-  flightsLong: z.number().min(0).describe("Number of long-haul return flights per year."),
+  flightsShort: z.coerce.number().min(0).describe("Number of short-haul return flights per year."),
+  flightsLong: z.coerce.number().min(0).describe("Number of long-haul return flights per year."),
 
+  // Diet
   diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
-  wasteKg: z.number().min(0).describe("Weekly non-recycled waste in kg."),
+  
+  // Waste
+  wasteKg: z.coerce.number().min(0).describe("Weekly non-recycled waste in kg."),
 });
 export type CarbonFootprintCalculatorInput = z.infer<typeof CarbonFootprintCalculatorInputSchema>;
 
@@ -35,7 +40,8 @@ const CarbonFootprintCalculatorOutputSchema = z.object({
   breakdown: z.object({
     household: z.number(),
     transport: z.number(),
-    lifestyle: z.number(),
+    diet: z.number(),
+    waste: z.number(),
   }),
   tips: z
     .array(z.string())
@@ -44,7 +50,7 @@ const CarbonFootprintCalculatorOutputSchema = z.object({
 export type CarbonFootprintCalculatorOutput = z.infer<typeof CarbonFootprintCalculatorOutputSchema>;
 
 
-// Simplified emission factors (in kg CO₂e). In a real app, these would be more complex.
+// Simplified emission factors (in kg CO₂e). In a real app, these would be more complex and region-specific.
 // Sources: EPA, GHG Protocol, Our World in Data
 const EMISSION_FACTORS = {
   // Scope 2
@@ -56,17 +62,20 @@ const EMISSION_FACTORS = {
   petrol: 2.31,       // kg CO₂e per litre
   diesel: 2.68,       // kg CO₂e per litre
 
-  // Scope 3
+  // Scope 3 - Transport
   flightsShort: 250,  // kg CO₂e per short-haul return flight (< 3 hours)
   flightsLong: 1000,   // kg CO₂e per long-haul return flight (> 3 hours)
 
+  // Scope 3 - Diet
   diet: { // kg CO₂e per year
-    vegan: 1000,
-    vegetarian: 1300,
-    pescatarian: 1500,
-    omnivore: 2500,
-    omnivore_high_meat: 3300,
+    vegan: 600,
+    vegetarian: 1000,
+    pescatarian: 1400,
+    omnivore: 1800,
+    omnivore_high_meat: 2500,
   },
+  
+  // Scope 3 - Waste
   waste: 0.6, // kg CO₂e per kg of landfill waste
 };
 
@@ -97,20 +106,22 @@ export async function calculateCarbonFootprint(
     const flightsAnnual = (flightsShort * EMISSION_FACTORS.flightsShort) + (flightsLong * EMISSION_FACTORS.flightsLong);
     const transportTotal = carAnnual + flightsAnnual;
 
-    // 3. Lifestyle Emissions (Annual)
+    // 3. Diet Emissions (Annual)
     const dietAnnual = EMISSION_FACTORS.diet[diet];
+    
+    // 4. Waste Emissions (Annual)
     const wasteAnnual = wasteKg * 52 * EMISSION_FACTORS.waste;
-    const lifestyleTotal = dietAnnual + wasteAnnual;
 
     // Convert all from kg to tonnes
     const householdTonnes = householdTotal / 1000;
     const transportTonnes = transportTotal / 1000;
-    const lifestyleTonnes = lifestyleTotal / 1000;
+    const dietTonnes = dietAnnual / 1000;
+    const wasteTonnes = wasteAnnual / 1000;
     
-    const totalFootprint = householdTonnes + transportTonnes + lifestyleTonnes;
+    const totalFootprint = householdTonnes + transportTonnes + dietTonnes + wasteTonnes;
 
     // Generate tips based on the largest contributor
-    const breakdownForTips = { household: householdTonnes, transport: transportTonnes, lifestyle: lifestyleTonnes };
+    const breakdownForTips = { household: householdTonnes, transport: transportTonnes, diet: dietTonnes, waste: wasteTonnes };
     const largestContributor = (Object.keys(breakdownForTips) as (keyof typeof breakdownForTips)[]).reduce((a, b) => breakdownForTips[a] > breakdownForTips[b] ? a : b);
 
     let tips: string[] = [];
@@ -122,14 +133,12 @@ export async function calculateCarbonFootprint(
         if (carKm > 200) tips.push("For short trips, consider walking or cycling instead of driving. Combining errands into one trip also helps.");
         if (flightsLong > 0) tips.push("Long-haul flights have a significant impact. Consider offsetting your flight emissions or choosing alternative travel for your next trip.");
         tips.push("Regularly maintain your vehicle to ensure it runs efficiently, reducing fuel consumption.");
-    } else { // Lifestyle
+    } else if (largestContributor === 'diet') {
         if (diet.startsWith('omnivore')) tips.push("Reducing red meat consumption is one of the most impactful dietary changes. Try 'Meatless Mondays'.");
-        if (wasteKg > 3) tips.push("Focus on reducing food waste and composting organics. Avoid single-use plastics by carrying reusable bags and bottles.");
         tips.push("Support local and seasonal food producers to reduce emissions from food transportation and storage.");
-    }
-     // Add a general tip
-     if (tips.length < 3) {
-        tips.push("Consider advocating for or supporting community-wide green initiatives, like better public transport or local recycling programs.");
+    } else { // Waste
+        if (wasteKg > 3) tips.push("Focus on reducing food waste and composting organics. Avoid single-use plastics by carrying reusable bags and bottles.");
+        tips.push("Repair items instead of replacing them, and buy second-hand when possible to reduce manufacturing emissions.");
     }
 
     return {
@@ -137,7 +146,8 @@ export async function calculateCarbonFootprint(
         breakdown: {
             household: householdTonnes,
             transport: transportTonnes,
-            lifestyle: lifestyleTonnes,
+            diet: dietTonnes,
+            waste: wasteTonnes,
         },
         tips: tips.slice(0, 3),
     };

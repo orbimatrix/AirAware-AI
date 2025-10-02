@@ -1,39 +1,24 @@
 'use client'
 
-import { useFormStatus } from 'react-dom';
-import { useActionState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useFormStatus, useActionState } from 'react-dom';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, ChevronDown, Building, Car, Plane, Utensils } from 'lucide-react';
+import { Footprints, Leaf, Loader2, Sparkles, Info, LineChart, Building, Car, Utensils, Trash2, Home } from 'lucide-react';
 import { getWeeklyFootprint } from '@/app/(app)/carbon-footprint/actions';
 import { HistoryChart } from './history-chart';
 import { useFootprintHistory } from '@/hooks/use-footprint-history';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '../ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from '../ui/form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { cn } from '@/lib/utils';
+import { CarbonFootprintCalculatorInputSchema } from '@/ai/flows/carbon-footprint-calculator';
+import type { z } from 'zod';
 
-
-const formSchema = z.object({
-  householdSize: z.coerce.number().min(1, "Min 1 person."),
-  electricityKwh: z.coerce.number().min(0, "Cannot be negative."),
-  naturalGasM3: z.coerce.number().min(0, "Cannot be negative."),
-  heatingOilL: z.coerce.number().min(0, "Cannot be negative."),
-  carKm: z.coerce.number().min(0, "Cannot be negative."),
-  carFuelType: z.enum(['petrol', 'diesel', 'electric']),
-  carFuelEconomy: z.coerce.number().min(0, "Cannot be negative.").optional(),
-  flightsShort: z.coerce.number().min(0, "Cannot be negative."),
-  flightsLong: z.coerce.number().min(0, "Cannot be negative."),
-  diet: z.enum(['vegan', 'vegetarian', 'pescatarian', 'omnivore', 'omnivore_high_meat']),
-  wasteKg: z.coerce.number().min(0, "Cannot be negative."),
-});
-
-type FormValues = z.infer<typeof formSchema>;
+type FormValues = z.infer<typeof CarbonFootprintCalculatorInputSchema>;
 
 
 function SubmitButton() {
@@ -48,19 +33,19 @@ function SubmitButton() {
 
 export function CalculatorForm() {
   const form = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(CarbonFootprintCalculatorInputSchema),
     defaultValues: {
       householdSize: 1,
-      electricityKwh: 0,
-      naturalGasM3: 0,
+      electricityKwh: 250,
+      naturalGasM3: 50,
       heatingOilL: 0,
-      carKm: 0,
+      carKm: 400,
       carFuelType: 'petrol',
       carFuelEconomy: 8,
-      flightsShort: 0,
+      flightsShort: 1,
       flightsLong: 0,
       diet: 'omnivore',
-      wasteKg: 0,
+      wasteKg: 4,
     },
   });
 
@@ -69,7 +54,7 @@ export function CalculatorForm() {
   
   const { history, addEntry } = useFootprintHistory();
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = form.handleSubmit((data) => {
     const formData = new FormData();
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -77,8 +62,7 @@ export function CalculatorForm() {
       }
     });
     formAction(formData);
-  };
-
+  });
 
   useEffect(() => {
     if (state.data) {
@@ -96,21 +80,21 @@ export function CalculatorForm() {
         <div className="grid gap-8 lg:grid-cols-2">
             <Card className="self-start">
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <form onSubmit={onSubmit}>
                         <CardHeader>
                             <CardTitle>Detailed Lifestyle Inputs</CardTitle>
-                            <CardDescription>Provide monthly data for an annual footprint estimate.</CardDescription>
+                            <CardDescription>Provide your typical monthly data to estimate your annual carbon footprint. The more accurate your inputs, the better the estimate.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Accordion type="multiple" defaultValue={['household']} className="w-full">
                                 <AccordionItem value="household">
-                                    <AccordionTrigger className="text-lg font-semibold"><Building className="mr-2 h-5 w-5 text-primary" />Household</AccordionTrigger>
+                                    <AccordionTrigger className="text-lg font-semibold"><Home className="mr-2 h-5 w-5 text-primary" />Housing & Energy</AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="householdSize" render={({ field }) => (
-                                            <FormItem><Label>Number of people in household</Label><FormControl><Input type="number" placeholder="e.g., 2" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Number of people in household</Label><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                         <FormField control={form.control} name="electricityKwh" render={({ field }) => (
-                                            <FormItem><Label>Monthly Electricity Usage (kWh)</Label><FormControl><Input type="number" placeholder="e.g., 300" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Monthly Electricity Usage (kWh)</Label><FormControl><Input type="number" placeholder="e.g., 250" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                         <FormField control={form.control} name="naturalGasM3" render={({ field }) => (
                                             <FormItem><Label>Monthly Natural Gas (m³)</Label><FormControl><Input type="number" placeholder="e.g., 50" {...field} /></FormControl><FormMessage /></FormItem>
@@ -122,10 +106,10 @@ export function CalculatorForm() {
                                 </AccordionItem>
 
                                 <AccordionItem value="transport">
-                                    <AccordionTrigger className="text-lg font-semibold"><Car className="mr-2 h-5 w-5 text-primary" />Transport</AccordionTrigger>
+                                    <AccordionTrigger className="text-lg font-semibold"><Car className="mr-2 h-5 w-5 text-primary" />Transport & Travel</AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="carKm" render={({ field }) => (
-                                            <FormItem><Label>Monthly Distance by Car (km)</Label><FormControl><Input type="number" placeholder="e.g., 500" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Monthly Distance by Car (km)</Label><FormControl><Input type="number" placeholder="e.g., 400" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                         <FormField control={form.control} name="carFuelType" render={({ field }) => (
                                             <FormItem><Label>Car Fuel Type</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="petrol">Petrol</SelectItem><SelectItem value="diesel">Diesel</SelectItem><SelectItem value="electric">Electric</SelectItem></SelectContent></Select><FormMessage /></FormItem>
@@ -134,22 +118,28 @@ export function CalculatorForm() {
                                             <FormItem><Label>Fuel Economy (L/100km or kWh/100km)</Label><FormControl><Input type="number" placeholder="e.g., 8" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                          <FormField control={form.control} name="flightsShort" render={({ field }) => (
-                                            <FormItem><Label>Short-Haul Return Flights (per year)</Label><FormControl><Input type="number" placeholder="e.g., 2" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Short-Haul Return Flights (per year)</Label><FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl><FormDescription>Flights under 3 hours.</FormDescription><FormMessage /></FormItem>
                                         )} />
                                          <FormField control={form.control} name="flightsLong" render={({ field }) => (
-                                            <FormItem><Label>Long-Haul Return Flights (per year)</Label><FormControl><Input type="number" placeholder="e.g., 1" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Long-Haul Return Flights (per year)</Label><FormControl><Input type="number" placeholder="e.g., 0" {...field} /></FormControl><FormDescription>Flights over 3 hours.</FormDescription><FormMessage /></FormItem>
                                         )} />
                                     </AccordionContent>
                                 </AccordionItem>
                                 
                                 <AccordionItem value="diet">
-                                    <AccordionTrigger className="text-lg font-semibold"><Utensils className="mr-2 h-5 w-5 text-primary" />Diet & Waste</AccordionTrigger>
+                                    <AccordionTrigger className="text-lg font-semibold"><Utensils className="mr-2 h-5 w-5 text-primary" />Food & Diet</AccordionTrigger>
                                     <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="diet" render={({ field }) => (
                                             <FormItem><Label>Dietary Profile</Label><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent><SelectItem value="vegan">Vegan</SelectItem><SelectItem value="vegetarian">Vegetarian</SelectItem><SelectItem value="pescatarian">Pescatarian</SelectItem><SelectItem value="omnivore">Omnivore (avg. meat)</SelectItem><SelectItem value="omnivore_high_meat">Omnivore (high meat)</SelectItem></SelectContent></Select><FormMessage /></FormItem>
                                         )} />
+                                    </AccordionContent>
+                                </AccordionItem>
+
+                                 <AccordionItem value="waste">
+                                    <AccordionTrigger className="text-lg font-semibold"><Trash2 className="mr-2 h-5 w-5 text-primary" />Waste</AccordionTrigger>
+                                    <AccordionContent className="pt-4 space-y-4">
                                         <FormField control={form.control} name="wasteKg" render={({ field }) => (
-                                            <FormItem><Label>Weekly Non-Recycled Waste (kg)</Label><FormControl><Input type="number" placeholder="e.g., 5" {...field} /></FormControl><FormMessage /></FormItem>
+                                            <FormItem><Label>Weekly Non-Recycled Household Waste (kg)</Label><FormControl><Input type="number" placeholder="e.g., 4" {...field} /></FormControl><FormMessage /></FormItem>
                                         )} />
                                     </AccordionContent>
                                 </AccordionItem>
@@ -177,17 +167,20 @@ export function CalculatorForm() {
                             <p className="text-muted-foreground">tonnes CO₂e per year</p>
 
                              <div className="mt-6 text-left space-y-3">
-                                {Object.entries(state.data.breakdown).map(([key, value]) => (
+                                {Object.entries(state.data.breakdown).map(([key, value]) => {
+                                  if (value === 0) return null;
+                                  return (
                                     <div key={key}>
                                         <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                            <span className="font-medium capitalize">{key}</span>
                                             <span className="text-muted-foreground">{value.toFixed(2)} t</span>
                                         </div>
                                         <div className="w-full bg-primary/20 rounded-full h-2.5">
                                             <div className="bg-primary h-2.5 rounded-full" style={{ width: `${(value / state.data.totalFootprint) * 100}%` }}></div>
                                         </div>
                                     </div>
-                                ))}
+                                  );
+                                })}
                             </div>
 
                             <div className="mt-8 space-y-3 text-sm text-foreground/80 text-left">
@@ -218,7 +211,7 @@ export function CalculatorForm() {
                     Your Progress
                 </CardTitle>
                 <CardDescription>
-                    This chart tracks your annual carbon footprint over time.
+                    This chart tracks your estimated annual carbon footprint over time. Each calculation you make is saved.
                 </CardDescription>
             </CardHeader>
             <CardContent>
