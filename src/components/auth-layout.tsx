@@ -4,14 +4,25 @@ import { useUser } from '@/firebase';
 import { redirect } from 'next/navigation';
 import { useEffect } from 'react';
 import { Skeleton } from './ui/skeleton';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getApp } from 'firebase/app';
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      redirect('/login');
-    }
+    // This is the key change. Even if useUser reports loading is false,
+    // we double-check the underlying Firebase Auth state.
+    // If no user is found after the initial load, then we redirect.
+    const auth = getAuth(getApp());
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!isUserLoading && !firebaseUser) {
+        redirect('/login');
+      }
+    });
+
+    // Cleanup the listener
+    return () => unsubscribe();
   }, [isUserLoading, user]);
 
   if (isUserLoading || !user) {
