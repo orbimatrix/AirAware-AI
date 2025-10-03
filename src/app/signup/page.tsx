@@ -11,14 +11,23 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { signup } from '@/app/auth/actions';
+import { useRouter } from 'next/navigation';
 
 export default function SignupPage() {
   const [state, formAction] = useActionState(signup, {
     error: null,
     success: false,
   });
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      router.push('/dashboard');
+    }
+  }, [state.success, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/50">

@@ -7,7 +7,6 @@ import {
   getAuth,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { firebaseConfig } from '@/firebase/config';
@@ -57,8 +56,8 @@ export async function login(
     // Firebase provides error codes, but for simplicity, we'll use the message.
     return { error: e.message || 'Login failed.', success: false };
   }
-  // On success, redirect to the dashboard
-  return redirect('/dashboard');
+  // On success, return success state. Redirect is handled by the client.
+  return { error: null, success: true };
 }
 
 export async function signup(
@@ -82,8 +81,8 @@ export async function signup(
     return { error: e.message || 'Signup failed.', success: false };
   }
 
-  // On success, redirect to the dashboard
-  return redirect('/dashboard');
+  // On success, return success state. Redirect is handled by the client.
+  return { error: null, success: true };
 }
 
 export async function logout() {
