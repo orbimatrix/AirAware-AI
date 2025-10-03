@@ -41,9 +41,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/50">
+    <div className="flex items-center justify-center min-h-screen bg-card">
       <AuthWatcher />
-      <Card className="mx-auto max-w-sm bg-card">
+      <Card className="mx-auto max-w-sm bg-background">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
