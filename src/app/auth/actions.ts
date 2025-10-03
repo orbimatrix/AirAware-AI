@@ -3,13 +3,12 @@
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import {
   Auth,
-  createUserWithEmailAndPassword,
   getAuth,
-  signInWithEmailAndPassword,
 } from 'firebase/auth';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { firebaseConfig } from '@/firebase/config';
+import { initiateAnonymousSignIn, initiateEmailSignIn, initiateEmailSignUp } from '@/firebase';
 
 // Helper function to initialize Firebase app on the server if it doesn't exist.
 // This is safe to call multiple times.
@@ -47,7 +46,7 @@ export async function login(
   }
 
   try {
-    await signInWithEmailAndPassword(
+    initiateEmailSignIn(
       auth,
       parsed.data.email,
       parsed.data.password
@@ -56,8 +55,8 @@ export async function login(
     // Firebase provides error codes, but for simplicity, we'll use the message.
     return { error: e.message || 'Login failed.', success: false };
   }
-  // On success, redirect to the dashboard from the server.
-  redirect('/dashboard');
+  
+  return { error: null, success: true };
 }
 
 export async function signup(
@@ -72,7 +71,7 @@ export async function signup(
   }
 
   try {
-    await createUserWithEmailAndPassword(
+    initiateEmailSignUp(
       auth,
       parsed.data.email,
       parsed.data.password
@@ -81,8 +80,7 @@ export async function signup(
     return { error: e.message || 'Signup failed.', success: false };
   }
 
-  // On success, redirect to the dashboard from the server.
-  redirect('/dashboard');
+  return { error: null, success: true };
 }
 
 export async function logout() {
