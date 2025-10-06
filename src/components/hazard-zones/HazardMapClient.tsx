@@ -29,6 +29,13 @@ export function HazardMapClient() {
     }
     setError(null);
 
+    if (!NASA_API_KEY) {
+      const warning = "This feature requires a NASA FIRMS API key. Please add your key as `NEXT_PUBLIC_NASA_API_KEY` to your environment variables to view wildfire data.";
+      setError(warning);
+      console.warn(warning);
+      return;
+    }
+
     // Set up the map, centered on Pakistan
     const map = L.map(mapEl.current).setView([30.3753, 69.3451], 5);
     mapInstance.current = map;
@@ -42,12 +49,6 @@ export function HazardMapClient() {
     const layerControl = L.control.layers(undefined, overlayLayers).addTo(map);
 
     const addFireLayer = async () => {
-        if (!NASA_API_KEY) {
-            const warning = "Wildfire data is unavailable: NASA API key is not configured.";
-            setError(warning);
-            console.warn(warning);
-            return;
-        }
 
         try {
             const response = await fetch(FIRMS_API_URL);
@@ -119,15 +120,18 @@ export function HazardMapClient() {
     };
   }, [toast]);
 
+  if (error) {
+    return (
+        <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Map Data Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+        </Alert>
+    );
+  }
+
   return (
     <div className="space-y-4">
-        {error && (
-            <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Map Data Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
-            </Alert>
-        )}
         <div ref={mapEl} style={{ width: '100%', height: '600px', borderRadius: '8px', overflow: 'hidden' }} />
     </div>
   )
