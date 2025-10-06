@@ -185,7 +185,7 @@ export function HazardMapClient() {
         });
         overlayLayers['Precipitation'] = precipitationLayer;
         
-        const windLayer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/WND/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
+        const windLayer = L.tileLayer(`https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
         });
         overlayLayers['Wind Speed & Direction'] = windLayer;
