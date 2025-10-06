@@ -2,7 +2,7 @@
 // src/hooks/useAirQualityData.ts
 import { useState, useEffect } from 'react';
 
-// According to Open-Meteo response structure
+// According to our /api/air-quality response structure
 interface AirQualityData {
   aqi: number;
   components: {
