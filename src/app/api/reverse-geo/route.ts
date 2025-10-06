@@ -1,14 +1,12 @@
+
 import { NextResponse } from 'next/server';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 
-if (!API_KEY) {
-  console.warn("OPENWEATHER_API_KEY is not set in the environment variables.");
-}
-
 export async function GET(req: Request) {
   if (!API_KEY) {
-    return NextResponse.json({ error: 'Server configuration error: API key is missing.' }, { status: 500 });
+    console.error("OPENWEATHER_API_KEY is not set. This key is required for reverse geocoding.");
+    return NextResponse.json({ error: 'Server configuration error: The OpenWeatherMap API key is missing. Please add it to your environment variables.' }, { status: 500 });
   }
 
   try {
@@ -26,6 +24,7 @@ export async function GET(req: Request) {
 
     if (!apiRes.ok) {
       const errorBody = await apiRes.json();
+      console.error("OpenWeatherMap Geocoding API error:", errorBody);
       return NextResponse.json({ error: `Failed to fetch from OpenWeatherMap Geocoding: ${errorBody.message}` }, { status: apiRes.status });
     }
 

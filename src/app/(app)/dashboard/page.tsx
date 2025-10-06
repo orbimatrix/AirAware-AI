@@ -64,15 +64,18 @@ export default function DashboardPage() {
     try {
         const response = await fetch(`/api/reverse-geo?lat=${lat}&lon=${lon}`);
         if (!response.ok) {
-            throw new Error("Failed to fetch city name");
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to fetch city name");
         }
         const data = await response.json();
         const cityName = data[0]?.name || 'Unknown Location';
         setLocation({ lat, lon, name: cityName });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Reverse geocoding error:", error);
-        // Fallback to "your current location" if city lookup fails
+        // Fallback to "your current location" if city lookup fails but still show AQI data
         setLocation({ lat, lon, name: 'your current location' });
+        // Also set the location error to inform the user about the partial failure
+        setLocationError(`Could not fetch city name: ${error.message}. Showing data for coordinates.`);
     }
   }
 
@@ -168,7 +171,7 @@ export default function DashboardPage() {
       )
   }
   
-  if (locationError) {
+  if (locationError && !location) {
     return (
         <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -211,6 +214,13 @@ export default function DashboardPage() {
         title="Dashboard"
         description={description}
       />
+      {locationError && (
+         <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Location Name Warning</AlertTitle>
+            <AlertDescription>{locationError}</AlertDescription>
+        </Alert>
+      )}
       <Suspense fallback={<InsightCardSkeleton />}>
         {loadingInsight ? <InsightCardSkeleton /> : (insight && <AqiInsightCard insightData={insight} />)}
       </Suspense>
