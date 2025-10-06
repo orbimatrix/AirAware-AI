@@ -4,14 +4,11 @@ import { NextResponse } from 'next/server';
 // An API key from https://firms.modaps.eosdis.nasa.gov/api/api_key/ is required.
 
 const API_KEY = process.env.NASA_API_KEY;
-
-// Source: VIIRS S-NPP, All world, last 24 hours
-// Note: The API uses 'source' not 'map_key' for this type of request.
 const SOURCE = 'VIIRS_SNPP_NRT';
 const AREA = 'world';
-const TIME_RANGE = '24'; // The API expects hours as a number
+const TIME_RANGE = '24'; // hours
 
-// Corrected API URL structure
+// Corrected API URL structure for CSV data
 const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${API_KEY}/${SOURCE}/${AREA}/${TIME_RANGE}`;
 
 export async function GET() {
@@ -24,7 +21,11 @@ export async function GET() {
     }
 
     try {
-        const response = await fetch(FIRMS_API_URL);
+        const response = await fetch(FIRMS_API_URL, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -35,16 +36,14 @@ export async function GET() {
             );
         }
         
-        // The API returns CSV, so we need to convert it to GeoJSON
         const csvData = await response.text();
         const lines = csvData.trim().split('\n');
         
         if (lines.length <= 1) {
-            // Handle case where there's only a header or no data
             return NextResponse.json({ type: 'FeatureCollection', features: [] });
         }
 
-        const headers = lines[0].split(',');
+        const headers = lines[0].split(',').map(h => h.trim());
 
         const features = lines.slice(1).map(line => {
             const values = line.split(',');
@@ -52,7 +51,7 @@ export async function GET() {
 
             const entry: {[key: string]: any} = {};
             headers.forEach((header, i) => {
-                entry[header.trim()] = values[i];
+                entry[header] = values[i];
             });
 
             const latitude = parseFloat(entry.latitude);
@@ -60,7 +59,6 @@ export async function GET() {
             
             if (isNaN(latitude) || isNaN(longitude)) return null;
             
-            // Convert confidence string to a number if it exists
             if (entry.confidence) {
                 entry.confidence = parseInt(entry.confidence, 10);
             }

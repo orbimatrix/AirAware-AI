@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import 'leaflet/dist/leaflet.css';
-import L from 'leaflet'; // Import L directly
+import L from 'leaflet';
 
 // Manually import leaflet icons to fix display issues
 import 'leaflet/dist/images/marker-icon-2x.png';
@@ -20,7 +20,11 @@ export function HazardMapClient({
   const mapInstance = useRef<L.Map | null>(null);
 
   useEffect(() => {
-    if (mapInstance.current || !mapEl.current) return;
+    if (!mapEl.current) return;
+    if (mapInstance.current) {
+        mapInstance.current.remove();
+        mapInstance.current = null;
+    }
 
     // Set up the map
     mapInstance.current = L.map(mapEl.current, { center: [20, 0], zoom: 2 });
@@ -29,7 +33,7 @@ export function HazardMapClient({
       attribution: '&copy; OpenStreetMap contributors, NASA, OpenWeatherMap',
     }).addTo(mapInstance.current);
 
-    const baseLayers = {}; // Can add more base maps here
+    const baseLayers = {};
     const overlayLayers: Record<string, L.Layer> = {};
     const layerControl = L.control.layers(baseLayers, overlayLayers).addTo(mapInstance.current);
 
@@ -37,14 +41,22 @@ export function HazardMapClient({
     const addFireLayer = async () => {
       try {
         const res = await fetch(fireApi);
-        if (!res.ok) throw new Error('FIRMS GeoJSON fetch failed');
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`FIRMS GeoJSON fetch failed: ${errorText}`);
+        }
         const data = await res.json();
         
+        if (!data || !data.features || data.features.length === 0) {
+            console.log("No wildfire data to display.");
+            return;
+        }
+
         const fireLayer = L.geoJSON(data, {
           pointToLayer: (feature, latlng) => {
             const props = feature.properties || {};
-            const radius = props.confidence ? Math.min(20, 3 + (props.confidence / 100) * 10) : 6;
-            return L.circleMarker(latlng, { radius, fillOpacity: 0.7, color: '#ff5500', weight: 1, fillColor: '#ff5500' });
+            const radius = props.confidence ? Math.max(3, (props.confidence / 100) * 8) : 5;
+            return L.circleMarker(latlng, { radius, fillOpacity: 0.8, color: '#FF4500', weight: 1, fillColor: '#FF4500' });
           },
           onEachFeature: (feature, layer) => {
             const p = feature.properties || {};
@@ -55,10 +67,14 @@ export function HazardMapClient({
         
         overlayLayers['Wildfires'] = fireLayer;
         layerControl.addOverlay(fireLayer, 'Wildfires');
-        fireLayer.addTo(mapInstance.current!); // Add by default
+        fireLayer.addTo(mapInstance.current!);
 
+        // Fit map to Pakistan/surrounding area if no features are found to focus on
+        const pakistanBounds: L.LatLngBoundsExpression = [[23.6, 60.8], [37.1, 77.8]];
         if (fireLayer.getBounds && fireLayer.getBounds().isValid()) {
             mapInstance.current?.fitBounds(fireLayer.getBounds(), { maxZoom: 8, padding: [50, 50] });
+        } else {
+             mapInstance.current?.fitBounds(pakistanBounds);
         }
 
       } catch (err) {
