@@ -11,7 +11,6 @@ import { Home, Map, HeartPulse, Footprints, Trophy, ShieldAlert, MessageSquarePl
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, tooltip: 'Dashboard' },
   { href: '/hazard-zones', label: 'Hazard Zones', icon: ShieldAlert, tooltip: 'Hazard Zones' },
-  { href: '/recommendations', label: 'Health Advice', icon: HeartPulse, tooltip: 'Health Advice' },
   { href: '/health-journal', label: 'Health Journal', icon: BookHeart, tooltip: 'Health Journal' },
   { href: '/carbon-footprint', label: 'Carbon Footprint', icon: Footprints, tooltip: 'Carbon Footprint' },
   { href: '/challenges', label: 'Eco-Challenges', icon: Trophy, tooltip: 'Eco-Challenges' },
