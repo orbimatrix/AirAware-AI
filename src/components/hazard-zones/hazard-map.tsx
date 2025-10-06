@@ -1,3 +1,4 @@
+
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -23,10 +24,12 @@ export async function HazardMap() {
   return (
     <div className="space-y-6">
       {hazardData.isHazardZone && (
-        <Alert variant="destructive" className="bg-destructive/10 border-destructive/50 text-destructive-foreground">
+        <Alert variant="destructive" className="bg-destructive/10 border-destructive/50">
           <ShieldAlert className="h-5 w-5 !text-destructive" />
-          <AlertTitle className="font-bold">Hazard Zone Alert!</AlertTitle>
-          <AlertDescription>{hazardData.recommendation}</AlertDescription>
+          <AlertTitle className="font-bold text-destructive">Hazard Zone Alert!</AlertTitle>
+          <AlertDescription className="text-destructive">
+            {hazardData.recommendation}
+          </AlertDescription>
         </Alert>
       )}
       <Card>

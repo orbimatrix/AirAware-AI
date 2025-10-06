@@ -11,18 +11,39 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useActionState } from 'react';
-import { login } from '@/app/auth/actions';
+import { AuthWatcher } from '@/components/auth-watcher';
+import { useAuth } from '@/firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { useState, type FormEvent } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [state, formAction] = useActionState(login, {
-    error: null,
-    success: false,
-  });
+  const auth = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // On success, the AuthWatcher will handle the redirect.
+    } catch (e: any) {
+      setError(e.message || 'Login failed. Please check your credentials.');
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/50">
-      <Card className="mx-auto max-w-sm">
+    <div className="flex items-center justify-center min-h-screen bg-card">
+      <AuthWatcher />
+      <Card className="mx-auto max-w-sm bg-background">
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
@@ -30,7 +51,7 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={formAction} className="grid gap-4">
+          <form onSubmit={handleLogin} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -47,10 +68,11 @@ export default function LoginPage() {
               </div>
               <Input id="password" name="password" type="password" required />
             </div>
-            {state.error && (
-              <p className="text-sm text-destructive">{state.error}</p>
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
             )}
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Login
             </Button>
           </form>

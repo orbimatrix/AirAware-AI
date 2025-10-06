@@ -15,14 +15,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { logout } from '@/app/auth/actions';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+
 
 export function DashboardHeader() {
   const { score } = useUserScore();
   const { user } = useUser();
+  const auth = useAuth();
+  const router = useRouter();
+
 
   const handleLogout = async () => {
-    await logout();
+    await signOut(auth);
+    router.push('/login');
   };
 
   return (
@@ -60,13 +67,9 @@ export function DashboardHeader() {
                 <Link href="/profile">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <form action={handleLogout} className="w-full">
-                <button type="submit" className="w-full">
-                    <DropdownMenuItem>
-                        Log out
-                    </DropdownMenuItem>
-                </button>
-            </form>
+            <DropdownMenuItem onClick={handleLogout}>
+                Log out
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

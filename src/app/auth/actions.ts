@@ -1,12 +1,23 @@
 'use server';
 
-import { getAuthenticatedAppForUser } from '@/lib/firebase-admin';
+import { getApp, getApps, initializeApp } from 'firebase/app';
+import {
+  Auth,
+  getAuth,
+} from 'firebase/auth';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-} from 'firebase/auth';
+import { firebaseConfig } from '@/firebase/config';
+import { initiateAnonymousSignIn, initiateEmailSignIn, initiateEmailSignUp } from '@/firebase';
+
+// Helper function to initialize Firebase app on the server if it doesn't exist.
+// This is safe to call multiple times.
+function getAuthInstance(): Auth {
+  const app = !getApps().length
+    ? initializeApp(firebaseConfig)
+    : getApp();
+  return getAuth(app);
+}
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -27,7 +38,7 @@ export async function login(
   prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
-  const { auth } = await getAuthenticatedAppForUser();
+  const auth = getAuthInstance();
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
@@ -35,22 +46,24 @@ export async function login(
   }
 
   try {
-    await signInWithEmailAndPassword(
+    initiateEmailSignIn(
       auth,
       parsed.data.email,
       parsed.data.password
     );
   } catch (e: any) {
+    // Firebase provides error codes, but for simplicity, we'll use the message.
     return { error: e.message || 'Login failed.', success: false };
   }
-  return redirect('/dashboard');
+  
+  return { error: null, success: true };
 }
 
 export async function signup(
   prevState: AuthState,
   formData: FormData
 ): Promise<AuthState> {
-  const { auth } = await getAuthenticatedAppForUser();
+  const auth = getAuthInstance();
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
 
   if (!parsed.success) {
@@ -58,20 +71,23 @@ export async function signup(
   }
 
   try {
-    await createUserWithEmailAndPassword(
+    initiateEmailSignUp(
       auth,
       parsed.data.email,
       parsed.data.password
     );
   } catch (e: any) {
-    return { error: e.message, success: false };
+    return { error: e.message || 'Signup failed.', success: false };
   }
 
-  return redirect('/dashboard');
+  return { error: null, success: true };
 }
 
 export async function logout() {
-  const { auth } = await getAuthenticatedAppForUser();
-  await auth.signOut();
-  redirect('/login');
+    // Since this is a server action, we just redirect.
+    // The client-side `useUser` hook will detect the signed-out state.
+    // In a real app, you would handle session invalidation here.
+    // For this setup, we'll rely on client-side redirect after logout.
+    // A more robust solution might involve clearing cookies if they were used for session management.
+    return redirect('/login');
 }
