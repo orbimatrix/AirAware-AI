@@ -10,7 +10,11 @@ const FIRMS_API_URL = 'https://firms.modaps.eosdis.nasa.gov/api/v1/nrt/viirs-snp
 
 export async function GET() {
     try {
-        const response = await fetch(FIRMS_API_URL);
+        const response = await fetch(FIRMS_API_URL, {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
 
         if (!response.ok) {
             // Pass through the error from the FIRMS API
