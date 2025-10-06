@@ -1,11 +1,11 @@
 
 import { NextResponse } from 'next/server';
 
-const API_KEY = process.env.OPENWEATHER_API_KEY;
+const API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
 export async function GET(req: Request) {
   if (!API_KEY) {
-    console.error("OPENWEATHER_API_KEY is not set. This key is required for reverse geocoding.");
+    console.error("NEXT_PUBLIC_OPENWEATHER_API_KEY is not set. This key is required for reverse geocoding.");
     return NextResponse.json({ error: 'Server configuration error: The OpenWeatherMap API key is missing. Please add it to your environment variables.' }, { status: 500 });
   }
 
