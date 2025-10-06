@@ -87,7 +87,7 @@ export function HazardMapClient() {
                     const fireLayer = L.layerGroup(firePoints);
                     overlayLayers['Wildfires'] = fireLayer;
                     fireLayer.addTo(map);
-
+                    
                     const bounds = fireLayer.getBounds();
                     if (bounds.isValid()) {
                         map.fitBounds(bounds, { maxZoom: 8, padding: [50, 50] });
@@ -117,11 +117,36 @@ export function HazardMapClient() {
             attribution: '&copy; OpenWeatherMap'
         });
         overlayLayers['Precipitation'] = precipitationLayer;
+        
+        const windLayer = L.tileLayer(`https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+            attribution: '&copy; OpenWeatherMap'
+        });
+        overlayLayers['Wind Speed'] = windLayer;
+
+        const pressureLayer = L.tileLayer(`https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+            attribution: '&copy; OpenWeatherMap'
+        });
+        overlayLayers['Air Pressure'] = pressureLayer;
+        
+        const cloudsLayer = L.tileLayer(`https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+            attribution: '&copy; OpenWeatherMap'
+        });
+        overlayLayers['Clouds'] = cloudsLayer;
 
         const coLayer = L.tileLayer(`https://tile.openweathermap.org/map/co/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
         });
         overlayLayers['Carbon Monoxide'] = coLayer;
+        
+        const o3Layer = L.tileLayer(`https://tile.openweathermap.org/map/o3/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+            attribution: '&copy; OpenWeatherMap'
+        });
+        overlayLayers['Ozone (O₃)'] = o3Layer;
+
+        const no2Layer = L.tileLayer(`https://tile.openweathermap.org/map/no2/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+            attribution: '&copy; OpenWeatherMap'
+        });
+        overlayLayers['Nitrogen Dioxide (NO₂)'] = no2Layer;
 
     } else {
         console.warn("OPENWEATHER_API_KEY is missing. Weather and pollution layers will not be loaded.");
