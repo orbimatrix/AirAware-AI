@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
@@ -133,17 +134,17 @@ export function HazardMapClient() {
         });
         overlayLayers['Clouds'] = cloudsLayer;
 
-        const coLayer = L.tileLayer(`https://tile.openweathermap.org/map/co/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+        const coLayer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/CO/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
         });
         overlayLayers['Carbon Monoxide'] = coLayer;
         
-        const o3Layer = L.tileLayer(`https://tile.openweathermap.org/map/o3/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+        const o3Layer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/O3/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
         });
         overlayLayers['Ozone (O₃)'] = o3Layer;
 
-        const no2Layer = L.tileLayer(`https://tile.openweathermap.org/map/no2/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+        const no2Layer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/NO2/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
         });
         overlayLayers['Nitrogen Dioxide (NO₂)'] = no2Layer;
