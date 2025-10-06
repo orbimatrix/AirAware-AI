@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,7 +9,7 @@
  * - AirQualityInsightOutput - The return type for the getAirQualityInsight function.
  */
 
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const AirQualityInsightInputSchema = z.object({
   location: z.string().describe('The city for which the insight is being generated.'),

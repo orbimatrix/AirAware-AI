@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,7 +9,7 @@
  * - EducationalContentOutput - The return type for the getEducationalContent function.
  */
 
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const EducationalContentInputSchema = z.object({
   topic: z.enum(['Climate Change', 'Pollution Reduction', 'Sustainable Living']).describe('The environmental topic for the educational content.'),

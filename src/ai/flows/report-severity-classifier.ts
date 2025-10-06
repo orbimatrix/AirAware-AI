@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -9,7 +10,7 @@
  */
 
 import { ReportSeverityEnum } from '@/lib/types';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const ReportSeverityClassifierInputSchema = z.object({
   reportType: z.string().describe("The type of issue reported by the user (e.g., 'Illegal Trash Dumping', 'Visible Air/Water Pollution')."),

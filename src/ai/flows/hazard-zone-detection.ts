@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -8,7 +9,7 @@
  * - DetectHazardZonesOutput - The return type for the detectHazardZones function.
  */
 
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const DetectHazardZonesInputSchema = z.object({
   location: z
