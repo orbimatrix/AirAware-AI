@@ -14,9 +14,30 @@ import { AlertCircle } from 'lucide-react';
 
 const NASA_API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY;
 const OWM_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+const OPENAQ_API_KEY = process.env.NEXT_PUBLIC_OPENAQ_API_KEY;
 
-// Correctly scope the API to Pakistan (PAK)
-const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/country/csv/${NASA_API_KEY}/VIIRS_SNPP_NRT/PAK/1`;
+// EPA AQI Breakpoints for PM2.5
+const BREAKPOINTS = [
+    { cLow: 0.0, cHigh: 12.0, iLow: 0, iHigh: 50, color: '#00e400' }, // Good
+    { cLow: 12.1, cHigh: 35.4, iLow: 51, iHigh: 100, color: '#ffff00' }, // Moderate
+    { cLow: 35.5, cHigh: 55.4, iLow: 101, iHigh: 150, color: '#ff7e00' }, // Unhealthy for Sensitive Groups
+    { cLow: 55.5, cHigh: 150.4, iLow: 151, iHigh: 200, color: '#ff0000' }, // Unhealthy
+    { cLow: 150.5, cHigh: 250.4, iLow: 201, iHigh: 300, color: '#8f3f97' }, // Very Unhealthy
+    { cLow: 250.5, cHigh: 500.4, iLow: 301, iHigh: 500, color: '#7e0023' }, // Hazardous
+];
+
+function calculateAqi(concentration: number) {
+    const breakpoint = BREAKPOINTS.find(b => concentration >= b.cLow && concentration <= b.cHigh);
+    if (!breakpoint) {
+        // Handle cases outside the defined breakpoints, maybe return the highest category
+        return { aqi: 500, color: '#7e0023' };
+    }
+    const aqi = Math.round(
+        ((breakpoint.iHigh - breakpoint.iLow) / (breakpoint.cHigh - breakpoint.cLow)) * (concentration - breakpoint.cLow) + breakpoint.iLow
+    );
+    return { aqi, color: breakpoint.color };
+}
+
 
 export function HazardMapClient() {
   const mapEl = useRef<HTMLDivElement | null>(null);
@@ -46,6 +67,7 @@ export function HazardMapClient() {
     if (NASA_API_KEY) {
         const addFireLayer = async () => {
             try {
+                const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/country/csv/${NASA_API_KEY}/VIIRS_SNPP_NRT/PAK/1`;
                 const response = await fetch(FIRMS_API_URL);
                 const responseText = await response.text();
 
@@ -53,10 +75,14 @@ export function HazardMapClient() {
                     throw new Error(`Failed to fetch FIRMS data: ${responseText}`);
                 }
 
-                const lines = responseText.trim().split('\n');
-                if (lines.length <= 1 || lines[0].trim().startsWith("No data")) {
+                if (responseText.trim().startsWith("No data") || responseText.trim().length === 0) {
                     console.log("No active fire data from FIRMS for the specified region.");
                     toast({ title: "No Wildfires Detected", description: "Currently, there are no active wildfires in Pakistan." });
+                    return;
+                }
+
+                const lines = responseText.trim().split('\n');
+                if (lines.length <= 1) {
                     return;
                 }
 
@@ -93,8 +119,6 @@ export function HazardMapClient() {
                     if (bounds.isValid()) {
                         map.fitBounds(bounds, { maxZoom: 8, padding: [50, 50] });
                     }
-                } else {
-                     console.log("No valid fire points to display.");
                 }
 
             } catch (err: any) {
@@ -106,6 +130,51 @@ export function HazardMapClient() {
     } else {
         console.warn("NASA_API_KEY is missing. Wildfire layer will not be loaded.");
     }
+    
+    // --- Add OpenAQ Layer ---
+    if (OPENAQ_API_KEY) {
+        const addAqiLayer = async () => {
+            try {
+                const response = await fetch(`https://api.openaq.org/v3/latest?country=PK&parameter=pm25&limit=1000`, {
+                    headers: { 'X-API-Key': OPENAQ_API_KEY }
+                });
+                 if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`OpenAQ API error: ${errorText}`);
+                }
+                const data = await response.json();
+
+                const aqiPoints = data.results.map((result: any) => {
+                    const { aqi, color } = calculateAqi(result.value);
+                    const marker = L.circleMarker([result.coordinates.latitude, result.coordinates.longitude], {
+                        radius: 8,
+                        fillColor: color,
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    });
+                    marker.bindPopup(`<b>${result.location}</b><br>PM2.5 AQI: ${aqi}`);
+                    return marker;
+                });
+                
+                if (aqiPoints.length > 0) {
+                    const aqiLayer = L.layerGroup(aqiPoints);
+                    overlayLayers['Air Quality Stations'] = aqiLayer;
+                    aqiLayer.addTo(map);
+                } else {
+                    toast({ title: "No Air Quality Stations Found", description: "Could not find any active AQ stations in Pakistan via OpenAQ."});
+                }
+            } catch (err: any) {
+                 console.error('Error processing OpenAQ data:', err);
+                 setError(`Could not load air quality station data. ${err.message}`);
+            }
+        };
+        addAqiLayer();
+    } else {
+         console.warn("OPENAQ_API_KEY is missing. Air Quality layer will not be loaded.");
+    }
+
 
     // --- Add OpenWeatherMap Layers ---
     if (OWM_API_KEY) {
@@ -134,21 +203,6 @@ export function HazardMapClient() {
         });
         overlayLayers['Clouds'] = cloudsLayer;
 
-        const coLayer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/CO/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
-            attribution: '&copy; OpenWeatherMap'
-        });
-        overlayLayers['Carbon Monoxide'] = coLayer;
-        
-        const o3Layer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/O3/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
-            attribution: '&copy; OpenWeatherMap'
-        });
-        overlayLayers['Ozone (O₃)'] = o3Layer;
-
-        const no2Layer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/NO2/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
-            attribution: '&copy; OpenWeatherMap'
-        });
-        overlayLayers['Nitrogen Dioxide (NO₂)'] = no2Layer;
-
     } else {
         console.warn("OPENWEATHER_API_KEY is missing. Weather and pollution layers will not be loaded.");
     }
@@ -174,14 +228,13 @@ export function HazardMapClient() {
     );
   }
 
-  if (!NASA_API_KEY && !OWM_API_KEY) {
+  if (!NASA_API_KEY && !OWM_API_KEY && !OPENAQ_API_KEY) {
     return (
         <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>API Keys Missing</AlertTitle>
             <AlertDescription>
-                This feature requires API keys from NASA FIRMS (for wildfires) and OpenWeatherMap (for weather layers). 
-                Please add `NEXT_PUBLIC_NASA_API_KEY` and `NEXT_PUBLIC_OPENWEATHER_API_KEY` to your environment variables.
+                This feature requires API keys. Please add `NEXT_PUBLIC_NASA_API_KEY`, `NEXT_PUBLIC_OPENWEATHER_API_KEY`, and `NEXT_PUBLIC_OPENAQ_API_KEY` to your environment variables.
             </AlertDescription>
         </Alert>
     );
