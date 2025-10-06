@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
@@ -7,6 +7,8 @@ import L from 'leaflet';
 import 'leaflet/dist/images/marker-icon-2x.png';
 import 'leaflet/dist/images/marker-icon.png';
 import 'leaflet/dist/images/marker-shadow.png';
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 
 export function HazardMapClient({
@@ -18,6 +20,7 @@ export function HazardMapClient({
 }) {
   const mapEl = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<L.Map | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!mapEl.current) return;
@@ -25,17 +28,20 @@ export function HazardMapClient({
         mapInstance.current.remove();
         mapInstance.current = null;
     }
+    setError(null);
 
     // Set up the map
-    mapInstance.current = L.map(mapEl.current, { center: [20, 0], zoom: 2 });
+    const map = L.map(mapEl.current, { center: [30.3753, 69.3451], zoom: 5 }); // Center on Pakistan
+    mapInstance.current = map;
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors, NASA, OpenWeatherMap',
-    }).addTo(mapInstance.current);
+    }).addTo(map);
 
     const baseLayers = {};
     const overlayLayers: Record<string, L.Layer> = {};
-    const layerControl = L.control.layers(baseLayers, overlayLayers).addTo(mapInstance.current);
+    const layerControl = L.control.layers(baseLayers, overlayLayers).addTo(map);
 
     // --- Fetch and Add Wildfire Data ---
     const addFireLayer = async () => {
@@ -65,20 +71,17 @@ export function HazardMapClient({
           },
         });
         
-        overlayLayers['Wildfires'] = fireLayer;
         layerControl.addOverlay(fireLayer, 'Wildfires');
-        fireLayer.addTo(mapInstance.current!);
+        fireLayer.addTo(map); // Add to map immediately
 
-        // Fit map to Pakistan/surrounding area if no features are found to focus on
-        const pakistanBounds: L.LatLngBoundsExpression = [[23.6, 60.8], [37.1, 77.8]];
-        if (fireLayer.getBounds && fireLayer.getBounds().isValid()) {
-            mapInstance.current?.fitBounds(fireLayer.getBounds(), { maxZoom: 8, padding: [50, 50] });
-        } else {
-             mapInstance.current?.fitBounds(pakistanBounds);
+        // Fit map to the data bounds if features exist
+        const bounds = fireLayer.getBounds();
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { maxZoom: 8, padding: [50, 50] });
         }
-
-      } catch (err) {
+      } catch (err: any) {
         console.error('Load hazard GeoJSON error:', err);
+        setError(`Could not load wildfire data. ${err.message}`);
       }
     };
     
@@ -98,11 +101,11 @@ export function HazardMapClient({
             });
 
             const warningLayer = L.layerGroup(warningMarkers);
-            overlayLayers['Weather Warnings'] = warningLayer;
             layerControl.addOverlay(warningLayer, 'Weather Warnings');
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('Load weather warnings error:', err);
+             // Non-critical, so we don't set a main error state
         }
     };
 
@@ -117,5 +120,16 @@ export function HazardMapClient({
     };
   }, [fireApi, warningsApi]);
 
-  return <div ref={mapEl} style={{ width: '100%', height: '600px', borderRadius: '8px', overflow: 'hidden' }} />;
+  return (
+    <div className="space-y-4">
+        {error && (
+            <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Map Data Error</AlertTitle>
+                <AlertDescription>{error}</AlertDescription>
+            </Alert>
+        )}
+        <div ref={mapEl} style={{ width: '100%', height: '600px', borderRadius: '8px', overflow: 'hidden' }} />
+    </div>
+  )
 }

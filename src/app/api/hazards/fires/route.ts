@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// This API route proxies NASA FIRMS data.
+// This API route proxies NASA FIRMS data and converts it to GeoJSON.
 // An API key from https://firms.modaps.eosdis.nasa.gov/api/api_key/ is required.
 
 const API_KEY = process.env.NASA_API_KEY;
@@ -8,7 +8,6 @@ const SOURCE = 'VIIRS_SNPP_NRT';
 const AREA = 'world';
 const TIME_RANGE = '24'; // hours
 
-// Corrected API URL structure for CSV data
 const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${API_KEY}/${SOURCE}/${AREA}/${TIME_RANGE}`;
 
 export async function GET() {
@@ -21,29 +20,34 @@ export async function GET() {
     }
 
     try {
-        const response = await fetch(FIRMS_API_URL, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-            }
-        });
+        const response = await fetch(FIRMS_API_URL);
+
+        const responseText = await response.text();
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error(`Failed to fetch FIRMS data: ${response.status} ${errorText}`);
+            console.error(`Failed to fetch FIRMS data: ${response.status} ${responseText}`);
             return NextResponse.json(
-                { error: `Failed to fetch FIRMS data: ${errorText}` },
+                { error: `Failed to fetch FIRMS data: ${responseText}` },
                 { status: response.status }
             );
         }
         
-        const csvData = await response.text();
-        const lines = csvData.trim().split('\n');
+        const lines = responseText.trim().split('\n');
         
-        if (lines.length <= 1) {
+        if (lines.length <= 1 || lines[0].trim() === "No data for selected area and date range") {
             return NextResponse.json({ type: 'FeatureCollection', features: [] });
         }
 
         const headers = lines[0].split(',').map(h => h.trim());
+        const latIndex = headers.indexOf('latitude');
+        const lonIndex = headers.indexOf('longitude');
+
+        if (latIndex === -1 || lonIndex === -1) {
+             return NextResponse.json(
+                { error: 'Could not find latitude or longitude columns in FIRMS data.' },
+                { status: 500 }
+            );
+        }
 
         const features = lines.slice(1).map(line => {
             const values = line.split(',');
@@ -54,13 +58,15 @@ export async function GET() {
                 entry[header] = values[i];
             });
 
-            const latitude = parseFloat(entry.latitude);
-            const longitude = parseFloat(entry.longitude);
+            const latitude = parseFloat(values[latIndex]);
+            const longitude = parseFloat(values[lonIndex]);
             
             if (isNaN(latitude) || isNaN(longitude)) return null;
             
+            // Convert confidence to a number if it exists
             if (entry.confidence) {
-                entry.confidence = parseInt(entry.confidence, 10);
+                const confidenceVal = parseInt(entry.confidence, 10);
+                entry.confidence = isNaN(confidenceVal) ? entry.confidence : confidenceVal;
             }
 
             return {
@@ -83,7 +89,7 @@ export async function GET() {
     } catch (error: any) {
         console.error("Error proxying FIRMS data:", error);
         return NextResponse.json(
-            { error: 'An internal server error occurred.' },
+            { error: 'An internal server error occurred while processing FIRMS data.' },
             { status: 500 }
         );
     }
