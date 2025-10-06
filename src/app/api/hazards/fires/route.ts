@@ -6,12 +6,13 @@ import { NextResponse } from 'next/server';
 const API_KEY = process.env.NASA_API_KEY;
 
 // Source: VIIRS S-NPP, All world, last 24 hours
-const MAP_KEY = 'VIIRS_SNPP_NRT';
-const SOURCE = 'VIIRS_SNPP';
+// Note: The API uses 'source' not 'map_key' for this type of request.
+const SOURCE = 'VIIRS_SNPP_NRT';
 const AREA = 'world';
-const TIME_RANGE = '24h';
+const TIME_RANGE = '24'; // The API expects hours as a number
 
-const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${API_KEY}/${MAP_KEY}/${AREA}/${TIME_RANGE}`;
+// Corrected API URL structure
+const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${API_KEY}/${SOURCE}/${AREA}/${TIME_RANGE}`;
 
 export async function GET() {
     if (!API_KEY) {
@@ -36,7 +37,13 @@ export async function GET() {
         
         // The API returns CSV, so we need to convert it to GeoJSON
         const csvData = await response.text();
-        const lines = csvData.split('\n');
+        const lines = csvData.trim().split('\n');
+        
+        if (lines.length <= 1) {
+            // Handle case where there's only a header or no data
+            return NextResponse.json({ type: 'FeatureCollection', features: [] });
+        }
+
         const headers = lines[0].split(',');
 
         const features = lines.slice(1).map(line => {
@@ -45,27 +52,28 @@ export async function GET() {
 
             const entry: {[key: string]: any} = {};
             headers.forEach((header, i) => {
-                entry[header] = values[i];
+                entry[header.trim()] = values[i];
             });
 
             const latitude = parseFloat(entry.latitude);
             const longitude = parseFloat(entry.longitude);
-            const confidence = parseInt(entry.confidence, 10);
             
             if (isNaN(latitude) || isNaN(longitude)) return null;
+            
+            // Convert confidence string to a number if it exists
+            if (entry.confidence) {
+                entry.confidence = parseInt(entry.confidence, 10);
+            }
 
             return {
                 type: 'Feature' as const,
-                properties: {
-                    ...entry,
-                    confidence: confidence,
-                },
+                properties: entry,
                 geometry: {
                     type: 'Point' as const,
                     coordinates: [longitude, latitude]
                 }
             };
-        }).filter(feature => feature !== null);
+        }).filter((feature): feature is NonNullable<typeof feature> => feature !== null);
 
         const geojsonData = {
             type: 'FeatureCollection' as const,
