@@ -11,7 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
 
 const NASA_API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY;
-const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${NASA_API_KEY}/VIIRS_SNPP_NRT/world/1`;
+// Correctly scope the API to Pakistan (PAK) instead of 'world'
+const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/country/csv/${NASA_API_KEY}/VIIRS_SNPP_NRT/PAK/1`;
 
 export function HazardMapClient() {
   const mapEl = useRef<HTMLDivElement | null>(null);
@@ -25,8 +26,8 @@ export function HazardMapClient() {
     }
     setError(null);
 
-    // Set up the map
-    const map = L.map(mapEl.current).setView([30.3753, 69.3451], 5); // Center on Pakistan
+    // Set up the map, centered on Pakistan
+    const map = L.map(mapEl.current).setView([30.3753, 69.3451], 5);
     mapInstance.current = map;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -55,7 +56,9 @@ export function HazardMapClient() {
 
             const lines = responseText.trim().split('\n');
             if (lines.length <= 1 || lines[0].trim().startsWith("No data")) {
-                console.log("No active fire data from FIRMS.");
+                console.log("No active fire data from FIRMS for the specified region.");
+                // Optionally show a message to the user
+                toast({ title: "No Wildfires Detected", description: "Currently, there are no active wildfires in Pakistan." });
                 return;
             }
 
