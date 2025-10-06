@@ -45,11 +45,12 @@ function DashboardSkeleton() {
 }
 
 function getAqiStatus(aqi: number) {
-    if (aqi <= 1) return { status: "Good", className: "text-green-600" };
-    if (aqi <= 2) return { status: "Fair", className: "text-yellow-600" };
-    if (aqi <= 3) return { status: "Moderate", className: "text-orange-600" };
-    if (aqi <= 4) return { status: "Poor", className: "text-red-600" };
-    return { status: "Very Poor", className: "text-purple-600" };
+    if (aqi <= 20) return { status: "Good", className: "text-green-600" };
+    if (aqi <= 40) return { status: "Fair", className: "text-yellow-600" };
+    if (aqi <= 60) return { status: "Moderate", className: "text-orange-600" };
+    if (aqi <= 80) return { status: "Poor", className: "text-red-600" };
+    if (aqi <= 100) return { status: "Very Poor", className: "text-purple-600" };
+    return { status: "Extremely Poor", className: "text-purple-800" };
 }
 
 export default function DashboardPage() {
@@ -150,7 +151,7 @@ export default function DashboardPage() {
 
   const transformedData: AqiData | null = aqData ? {
     location: location?.name ?? 'Your Location',
-    aqi: aqData.aqi,
+    aqi: Math.round(aqData.aqi),
     status: getAqiStatus(aqData.aqi).status,
     statusClassName: getAqiStatus(aqData.aqi).className,
     pollutants: [
@@ -236,5 +237,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

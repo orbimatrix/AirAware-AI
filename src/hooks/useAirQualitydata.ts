@@ -1,18 +1,17 @@
+
 // src/hooks/useAirQualityData.ts
 import { useState, useEffect } from 'react';
 
-// According to OpenWeatherMap response structure
+// According to Open-Meteo response structure
 interface AirQualityData {
   aqi: number;
   components: {
     co?: number;
-    no?: number;
     no2?: number;
     o3?: number;
     so2?: number;
     pm2_5?: number;
     pm10?: number;
-    nh3?: number;
   };
   dt: number;
 }
