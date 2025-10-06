@@ -1,7 +1,9 @@
+
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { useToast } from '@/hooks/use-toast';
 
 // Manually import leaflet icons to fix display issues
 import 'leaflet/dist/images/marker-icon-2x.png';
@@ -18,6 +20,7 @@ export function HazardMapClient() {
   const mapEl = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!mapEl.current) return;
@@ -114,7 +117,7 @@ export function HazardMapClient() {
         mapInstance.current = null;
       }
     };
-  }, []);
+  }, [toast]);
 
   return (
     <div className="space-y-4">
