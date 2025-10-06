@@ -10,14 +10,10 @@ import 'leaflet/dist/images/marker-shadow.png';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
 
+const NASA_API_KEY = process.env.NEXT_PUBLIC_NASA_API_KEY;
+const FIRMS_API_URL = `https://firms.modaps.eosdis.nasa.gov/api/area/csv/${NASA_API_KEY}/VIIRS_SNPP_NRT/world/1`;
 
-export function HazardMapClient({
-  fireApi = '/api/hazards/fires',
-  warningsApi = '/api/hazards/warnings'
-}: {
-  fireApi?: string,
-  warningsApi?: string,
-}) {
+export function HazardMapClient() {
   const mapEl = useRef<HTMLDivElement | null>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -26,91 +22,88 @@ export function HazardMapClient({
     if (!mapEl.current) return;
     if (mapInstance.current) {
         mapInstance.current.remove();
-        mapInstance.current = null;
     }
     setError(null);
 
     // Set up the map
-    const map = L.map(mapEl.current, { center: [30.3753, 69.3451], zoom: 5 }); // Center on Pakistan
+    const map = L.map(mapEl.current).setView([30.3753, 69.3451], 5); // Center on Pakistan
     mapInstance.current = map;
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; OpenStreetMap contributors, NASA, OpenWeatherMap',
+      attribution: '&copy; OpenStreetMap contributors, NASA',
     }).addTo(map);
 
-    const baseLayers = {};
     const overlayLayers: Record<string, L.Layer> = {};
-    const layerControl = L.control.layers(baseLayers, overlayLayers).addTo(map);
+    const layerControl = L.control.layers(undefined, overlayLayers).addTo(map);
 
-    // --- Fetch and Add Wildfire Data ---
     const addFireLayer = async () => {
-      try {
-        const res = await fetch(fireApi);
-        if (!res.ok) {
-            const errorText = await res.text();
-            throw new Error(`FIRMS GeoJSON fetch failed: ${errorText}`);
-        }
-        const data = await res.json();
-        
-        if (!data || !data.features || data.features.length === 0) {
-            console.log("No wildfire data to display.");
+        if (!NASA_API_KEY) {
+            const warning = "Wildfire data is unavailable: NASA API key is not configured.";
+            setError(warning);
+            console.warn(warning);
             return;
         }
 
-        const fireLayer = L.geoJSON(data, {
-          pointToLayer: (feature, latlng) => {
-            const props = feature.properties || {};
-            const radius = props.confidence ? Math.max(3, (props.confidence / 100) * 8) : 5;
-            return L.circleMarker(latlng, { radius, fillOpacity: 0.8, color: '#FF4500', weight: 1, fillColor: '#FF4500' });
-          },
-          onEachFeature: (feature, layer) => {
-            const p = feature.properties || {};
-            const popupContent = Object.entries(p).map(([k, v]) => `<b>${k}</b>: ${v}`).join('<br/>');
-            layer.bindPopup(popupContent);
-          },
-        });
-        
-        layerControl.addOverlay(fireLayer, 'Wildfires');
-        fireLayer.addTo(map); // Add to map immediately
-
-        // Fit map to the data bounds if features exist
-        const bounds = fireLayer.getBounds();
-        if (bounds.isValid()) {
-            map.fitBounds(bounds, { maxZoom: 8, padding: [50, 50] });
-        }
-      } catch (err: any) {
-        console.error('Load hazard GeoJSON error:', err);
-        setError(`Could not load wildfire data. ${err.message}`);
-      }
-    };
-    
-    // --- Fetch and Add Weather Warnings ---
-    const addWarningsLayer = async () => {
         try {
-            const res = await fetch(warningsApi);
-            if (!res.ok) throw new Error('Weather warnings fetch failed');
-            const warnings = await res.json();
+            const response = await fetch(FIRMS_API_URL);
+            const responseText = await response.text();
 
-            if (warnings.length === 0) return;
+            if (!response.ok) {
+                throw new Error(`Failed to fetch FIRMS data: ${responseText}`);
+            }
 
-            const warningMarkers = warnings.map((warning: any) => {
-                const marker = L.marker([warning.lat, warning.lon])
-                    .bindPopup(`<b>${warning.city}: ${warning.event}</b><br>${warning.description}`);
-                return marker;
-            });
+            const lines = responseText.trim().split('\n');
+            if (lines.length <= 1 || lines[0].trim().startsWith("No data")) {
+                console.log("No active fire data from FIRMS.");
+                return;
+            }
 
-            const warningLayer = L.layerGroup(warningMarkers);
-            layerControl.addOverlay(warningLayer, 'Weather Warnings');
+            const headers = lines[0].split(',').map(h => h.trim());
+            const latIndex = headers.indexOf('latitude');
+            const lonIndex = headers.indexOf('longitude');
+            const confidenceIndex = headers.indexOf('confidence');
+
+            if (latIndex === -1 || lonIndex === -1) {
+                throw new Error("Could not find latitude or longitude in FIRMS data.");
+            }
+            
+            const firePoints = lines.slice(1).map(line => {
+                const values = line.split(',');
+                const lat = parseFloat(values[latIndex]);
+                const lon = parseFloat(values[lonIndex]);
+                const confidence = values[confidenceIndex] ? parseInt(values[confidenceIndex], 10) : 0;
+
+                if (!isNaN(lat) && !isNaN(lon)) {
+                     const radius = confidence ? Math.max(3, (confidence / 100) * 8) : 5;
+                     const marker = L.circleMarker([lat, lon], { radius, fillOpacity: 0.8, color: '#FF4500', weight: 1, fillColor: '#FF4500' });
+                     marker.bindPopup(`<b>Fire Event</b><br>Confidence: ${confidence}%`);
+                     return marker;
+                }
+                return null;
+            }).filter((p): p is L.CircleMarker => p !== null);
+
+
+            if (firePoints.length > 0) {
+                const fireLayer = L.layerGroup(firePoints);
+                layerControl.addOverlay(fireLayer, 'Wildfires');
+                fireLayer.addTo(map);
+
+                const bounds = fireLayer.getBounds();
+                if (bounds.isValid()) {
+                    map.fitBounds(bounds, { maxZoom: 8, padding: [50, 50] });
+                }
+            } else {
+                 console.log("No valid fire points to display.");
+            }
 
         } catch (err: any) {
-            console.error('Load weather warnings error:', err);
-             // Non-critical, so we don't set a main error state
+            console.error('Error processing FIRMS data:', err);
+            setError(`Could not load wildfire data. ${err.message}`);
         }
     };
-
+    
     addFireLayer();
-    addWarningsLayer();
 
     return () => {
       if (mapInstance.current) {
@@ -118,7 +111,7 @@ export function HazardMapClient({
         mapInstance.current = null;
       }
     };
-  }, [fireApi, warningsApi]);
+  }, []);
 
   return (
     <div className="space-y-4">
