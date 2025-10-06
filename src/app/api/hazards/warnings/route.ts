@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cities } from '@/lib/cities';
+import { cities } from '../../../../lib/cities';
 
 const API_KEY = process.env.OPENWEATHER_API_KEY;
 
