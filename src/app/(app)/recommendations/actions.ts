@@ -44,7 +44,7 @@ export async function getHealthRecommendation(
     });
 
     return { data: result, error: null };
-  } catch (e) {
+  } catch (e: any) {
     console.error(e);
     return { data: null, error: "Failed to get recommendations. Please try again." };
   }
