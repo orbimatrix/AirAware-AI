@@ -75,7 +75,7 @@ export function HazardMapClient() {
                     throw new Error(`Failed to fetch FIRMS data: ${responseText}`);
                 }
 
-                if (responseText.trim().startsWith("No data") || responseText.trim().length === 0) {
+                if (responseText.trim().startsWith("No data") || responseText.trim().length === 0 || responseText.includes("Error")) {
                     console.log("No active fire data from FIRMS for the specified region.");
                     toast({ title: "No Wildfires Detected", description: "Currently, there are no active wildfires in Pakistan." });
                     return;
@@ -127,8 +127,6 @@ export function HazardMapClient() {
             }
         };
         addFireLayer();
-    } else {
-        console.warn("NASA_API_KEY is missing. Wildfire layer will not be loaded.");
     }
     
     // --- Add OpenAQ Layer ---
@@ -145,6 +143,7 @@ export function HazardMapClient() {
                 const data = await response.json();
 
                 const aqiPoints = data.results.map((result: any) => {
+                    if (!result.coordinates) return null;
                     const { aqi, color } = calculateAqi(result.value);
                     const marker = L.circleMarker([result.coordinates.latitude, result.coordinates.longitude], {
                         radius: 8,
@@ -156,12 +155,12 @@ export function HazardMapClient() {
                     });
                     marker.bindPopup(`<b>${result.location}</b><br>PM2.5 AQI: ${aqi}`);
                     return marker;
-                });
+                }).filter((p): p is L.CircleMarker => p !== null);
                 
                 if (aqiPoints.length > 0) {
                     const aqiLayer = L.layerGroup(aqiPoints);
                     overlayLayers['Air Quality Stations'] = aqiLayer;
-                    aqiLayer.addTo(map);
+                    // Don't add to map by default, let user choose
                 } else {
                     toast({ title: "No Air Quality Stations Found", description: "Could not find any active AQ stations in Pakistan via OpenAQ."});
                 }
@@ -171,8 +170,6 @@ export function HazardMapClient() {
             }
         };
         addAqiLayer();
-    } else {
-         console.warn("OPENAQ_API_KEY is missing. Air Quality layer will not be loaded.");
     }
 
 
@@ -188,10 +185,10 @@ export function HazardMapClient() {
         });
         overlayLayers['Precipitation'] = precipitationLayer;
         
-        const windLayer = L.tileLayer(`https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
+        const windLayer = L.tileLayer(`https://maps.openweathermap.org/maps/2.0/weather/WND/{z}/{x}/{y}?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
         });
-        overlayLayers['Wind Speed'] = windLayer;
+        overlayLayers['Wind Speed & Direction'] = windLayer;
 
         const pressureLayer = L.tileLayer(`https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${OWM_API_KEY}`, {
             attribution: '&copy; OpenWeatherMap'
@@ -203,11 +200,11 @@ export function HazardMapClient() {
         });
         overlayLayers['Clouds'] = cloudsLayer;
 
-    } else {
-        console.warn("OPENWEATHER_API_KEY is missing. Weather and pollution layers will not be loaded.");
     }
 
-    L.control.layers({ "Base Map": baseLayer }, overlayLayers, { collapsed: false }).addTo(map);
+    if (Object.keys(overlayLayers).length > 0 || Object.keys({ "Base Map": baseLayer }).length > 0) {
+        L.control.layers({ "Base Map": baseLayer }, overlayLayers, { collapsed: false }).addTo(map);
+    }
 
     return () => {
       if (mapInstance.current) {
