@@ -6,12 +6,12 @@ import { useState, useEffect } from 'react';
 interface AirQualityData {
   aqi: number;
   components: {
-    co?: number;
-    no2?: number;
-    o3?: number;
-    so2?: number;
-    pm2_5?: number;
-    pm10?: number;
+    co?: number | null;
+    no2?: number | null;
+    o3?: number | null;
+    so2?: number | null;
+    pm2_5?: number | null;
+    pm10?: number | null;
   };
   dt: number;
 }
@@ -47,8 +47,10 @@ export function useAirQualityData(lat: number | null, lon: number | null): UseAi
         const result = await response.json();
         if (result.list && result.list.length > 0) {
             const apiData = result.list[0];
+            const aqiValue = Number(apiData.main?.aqi);
+
             setData({
-                aqi: apiData.main.aqi ?? 0,
+                aqi: isNaN(aqiValue) ? 0 : aqiValue,
                 components: apiData.components ?? {},
                 dt: apiData.dt ?? 0
             });
@@ -57,6 +59,7 @@ export function useAirQualityData(lat: number | null, lon: number | null): UseAi
         }
       } catch (err: any) {
         setError(err.message || 'An unknown error occurred');
+        setData(null); // Clear data on error
       } finally {
         setLoading(false);
       }

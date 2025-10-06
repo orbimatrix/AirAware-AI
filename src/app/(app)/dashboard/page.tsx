@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { AqiSummaryCard } from "@/components/dashboard/aqi-summary-card";
@@ -137,7 +138,9 @@ export default function DashboardPage() {
 
         // Store current AQI for next week comparison (after a delay to avoid immediate overwrite)
         setTimeout(() => {
-          localStorage.setItem(storageKey, aqData.aqi.toString());
+          if(aqData.aqi > 0) {
+            localStorage.setItem(storageKey, aqData.aqi.toString());
+          }
         }, 2000);
 
       } catch (error) {
@@ -149,7 +152,7 @@ export default function DashboardPage() {
     fetchInsight();
   }, [aqData, location]);
 
-  const transformedData: AqiData | null = aqData ? {
+  const transformedData: AqiData | null = aqData && aqData.aqi > 0 ? {
     location: location?.name ?? 'Your Location',
     aqi: Math.round(aqData.aqi),
     status: getAqiStatus(aqData.aqi).status,
@@ -216,7 +219,7 @@ export default function DashboardPage() {
         description={description}
       />
       {locationError && (
-         <Alert variant="destructive">
+         <Alert variant="default" className="bg-yellow-100 border-yellow-300 text-yellow-800">
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Location Name Warning</AlertTitle>
             <AlertDescription>{locationError}</AlertDescription>

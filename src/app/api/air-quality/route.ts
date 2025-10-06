@@ -30,7 +30,20 @@ export async function GET(req: Request) {
     if (times.length === 0) {
       return NextResponse.json({ error: 'No air quality data available.' }, { status: 404 });
     }
-    const idx = times.length - 1;
+    
+    // Find the latest valid index. Sometimes the last entry might be null.
+    let idx = -1;
+    for (let i = times.length - 1; i >= 0; i--) {
+        if (hourly.european_aqi?.[i] != null) {
+            idx = i;
+            break;
+        }
+    }
+
+    if (idx === -1) {
+        return NextResponse.json({ error: 'No valid recent air quality data found.' }, { status: 404 });
+    }
+
 
     // Return in a shape compatible with existing hook
     const response = {
