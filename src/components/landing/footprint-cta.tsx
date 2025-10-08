@@ -1,26 +1,20 @@
-import Image from "next/image";
 import Link from "next/link";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "../ui/button";
+import { Car, Footprints, Utensils, Home } from "lucide-react";
 
 export function FootprintCta() {
-  const footprintImage = PlaceHolderImages.find((p) => p.id === "carbonFootprint");
-
   return (
     <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg order-last lg:order-first">
-             {footprintImage && (
-              <Image
-                src={footprintImage.imageUrl}
-                alt={footprintImage.description}
-                fill
-                className="object-cover"
-                data-ai-hint={footprintImage.imageHint}
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/30 to-transparent"></div>
+           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg order-last lg:order-first p-8 bg-muted/50 border">
+              <div className="flex h-full items-center justify-center">
+                <div className="text-center">
+                    <Footprints className="h-20 w-20 text-primary mx-auto mb-4" />
+                    <p className="text-6xl font-bold text-primary tracking-tight">8.6</p>
+                    <p className="text-muted-foreground">tonnes CO₂e / year</p>
+                </div>
+              </div>
           </div>
            <div>
              <h2 className="text-3xl lg:text-4xl font-bold font-headline">Know Your Impact</h2>

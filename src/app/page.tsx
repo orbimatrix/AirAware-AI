@@ -4,13 +4,15 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import Marquee from '@/components/ui/marquee';
+import { AqiExplained } from '@/components/landing/aqi-explained';
+import { PersonalizedAdvice } from '@/components/landing/personalized-advice';
+import { FootprintCta } from '@/components/landing/footprint-cta';
+import { ChallengesCta } from '@/components/landing/challenges-cta';
+import { CtaFooter } from '@/components/landing/cta-footer';
 
 const features = [
   {
@@ -203,6 +205,11 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <AqiExplained />
+        <PersonalizedAdvice />
+        <FootprintCta />
+        <ChallengesCta />
+
         {/* Testimonials Section */}
         <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/50">
           <div className="container px-0">
@@ -247,25 +254,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="w-full py-20 md:py-24 lg:py-32 bg-primary/10">
-          <div className="container grid items-center justify-center gap-4 px-4 text-center md:px-6">
-            <div className="space-y-3">
-              <h2 className="text-3xl font-bold tracking-tighter md:text-4xl/tight font-headline">
-                Take Control of Your Environment
-              </h2>
-              <p className="mx-auto max-w-[600px] text-muted-foreground md:text-xl/relaxed">
-                Join our community and start making healthier choices today.
-                It’s free to sign up.
-              </p>
-            </div>
-            <div className="mx-auto w-full max-w-sm space-y-2">
-              <Button asChild size="lg">
-                <Link href="/signup">Join Now</Link>
-              </Button>
-            </div>
-          </div>
-        </section>
+        <CtaFooter />
       </main>
     </div>
   );

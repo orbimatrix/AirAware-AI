@@ -1,24 +1,26 @@
-import Image from "next/image";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { CheckCircle } from "lucide-react";
 
 export function AqiExplained() {
-  const aqiImage = PlaceHolderImages.find((p) => p.id === "aqiChart");
-
   return (
     <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg order-last lg:order-first">
-             {aqiImage && (
-              <Image
-                src={aqiImage.imageUrl}
-                alt={aqiImage.description}
-                fill
-                className="object-cover"
-                data-ai-hint={aqiImage.imageHint}
-              />
-            )}
+          <div className="order-last lg:order-first bg-primary/5 rounded-2xl p-8 lg:p-12 border">
+            <div className="flex items-center justify-center h-full">
+              <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Sample AQI
+                </p>
+                <div className="my-4">
+                  <span className="text-8xl font-bold tracking-tighter text-destructive">
+                    180
+                  </span>
+                </div>
+                <p className="text-3xl font-semibold font-headline text-destructive">
+                  Unhealthy
+                </p>
+              </div>
+            </div>
           </div>
           <div>
              <h2 className="text-3xl lg:text-4xl font-bold font-headline">Understand the Air You Breathe</h2>

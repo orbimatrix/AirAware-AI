@@ -1,11 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Button } from "../ui/button";
+import { Award, Star, Shield, Gem } from "lucide-react";
 
 export function ChallengesCta() {
-  const challengesImage = PlaceHolderImages.find((p) => p.id === "ecoChallenges");
-
   return (
     <section className="py-20 lg:py-28 bg-muted/50">
       <div className="container mx-auto px-4">
@@ -19,17 +16,27 @@ export function ChallengesCta() {
                 <Link href="/challenges">View Challenges</Link>
              </Button>
           </div>
-          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg">
-             {challengesImage && (
-              <Image
-                src={challengesImage.imageUrl}
-                alt={challengesImage.description}
-                fill
-                className="object-cover"
-                data-ai-hint={challengesImage.imageHint}
-              />
-            )}
-             <div className="absolute inset-0 bg-gradient-to-t from-muted/50 to-transparent"></div>
+          <div className="relative aspect-[4/3] rounded-2xl overflow-hidden p-8">
+             <div className="flex items-center justify-center h-full">
+                <div className="grid grid-cols-2 gap-6 text-primary">
+                    <div className="flex flex-col items-center gap-2 p-6 bg-background rounded-lg border">
+                        <Star className="h-12 w-12" />
+                        <p className="font-semibold">Eco-Novice</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 p-6 bg-background rounded-lg border">
+                        <Shield className="h-12 w-12" />
+                        <p className="font-semibold">Planet Protector</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 p-6 bg-background rounded-lg border">
+                        <Award className="h-12 w-12" />
+                        <p className="font-semibold">Green Guru</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2 p-6 bg-background rounded-lg border">
+                        <Gem className="h-12 w-12" />
+                        <p className="font-semibold">Climate Champion</p>
+                    </div>
+                </div>
+             </div>
           </div>
         </div>
       </div>
