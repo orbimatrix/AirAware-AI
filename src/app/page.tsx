@@ -166,8 +166,45 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Testimonials Section */}
+        {/* How It Works Section */}
         <section className="w-full py-20 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">
+                A Healthier Life in 3 Easy Steps
+              </h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Start your journey to cleaner air and better health today.
+              </p>
+            </div>
+            <div className="relative grid gap-10 md:grid-cols-3 md:gap-8">
+              {/* Dashed line connecting steps */}
+              <div className="absolute top-1/2 left-0 hidden w-full -translate-y-1/2 md:block">
+                  <svg width="100%" height="2" className="stroke-current text-border">
+                      <line x1="0" y1="1" x2="100%" y2="1" strokeWidth="2" strokeDasharray="8 8" />
+                  </svg>
+              </div>
+              <div className="relative flex flex-col items-center text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-3xl font-bold text-primary">1</div>
+                <h3 className="text-xl font-bold mb-2">Create Your Account</h3>
+                <p className="text-muted-foreground">Sign up for free and set up your personalized health profile in minutes.</p>
+              </div>
+              <div className="relative flex flex-col items-center text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-3xl font-bold text-primary">2</div>
+                <h3 className="text-xl font-bold mb-2">Get Live Data & Insights</h3>
+                <p className="text-muted-foreground">Access real-time AQI data and receive AI-powered alerts and health tips.</p>
+              </div>
+              <div className="relative flex flex-col items-center text-center">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-primary bg-primary/10 text-3xl font-bold text-primary">3</div>
+                <h3 className="text-xl font-bold mb-2">Take Action</h3>
+                <p className="text-muted-foreground">Join challenges, track your health, and contribute to a cleaner community.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials Section */}
+        <section className="w-full py-20 md:py-24 lg:py-32 bg-muted/50">
           <div className="container px-0">
             <div className="text-center max-w-3xl mx-auto mb-16 px-4 md:px-6">
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl font-headline">
@@ -187,8 +224,8 @@ export default function LandingPage() {
                   />
                 ))}
               </Marquee>
-              <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background"></div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background"></div>
+              <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-muted/50"></div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-muted/50"></div>
             </div>
           </div>
         </section>
