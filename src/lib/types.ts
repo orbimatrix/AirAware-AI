@@ -56,3 +56,36 @@ export type EcoReport = {
   severity: z.infer<typeof ReportSeverityEnum>;
   createdAt?: FieldValue;
 };
+
+export type NewReport = Omit<EcoReport, 'id'>;
+
+export const HealthRecsInputSchema = z.object({
+  aqi: z.number().describe('The current Air Quality Index (AQI) value.'),
+  age: z.number().optional().describe('The age of the user.'),
+  healthConditions: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'A list of pre-existing health conditions (e.g., "Asthma", "Heart Disease").'
+    ),
+});
+export type HealthRecsInput = z.infer<typeof HealthRecsInputSchema>;
+
+export const HealthRecsOutputSchema = z.object({
+  overallRecommendation: z
+    .string()
+    .describe(
+      'A primary, actionable recommendation based on the overall risk.'
+    ),
+  detailedAdvice: z
+    .array(
+      z.object({
+        title: z.string().describe('The title for the piece of advice.'),
+        description: z
+          .string()
+          .describe('A detailed paragraph explaining the advice.'),
+      })
+    )
+    .describe('An array of 3 to 4 specific, detailed pieces of advice.'),
+});
+export type HealthRecsOutput = z.infer<typeof HealthRecsOutputSchema>;

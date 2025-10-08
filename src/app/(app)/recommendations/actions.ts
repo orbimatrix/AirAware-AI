@@ -2,8 +2,8 @@
 
 import {
   personalizedHealthRecommendations,
-  HealthRecsOutput,
 } from '@/ai/flows/personalized-health-recommendations';
+import { HealthRecsOutput } from '@/lib/types';
 import { z } from 'zod';
 
 const HealthRecsFormSchema = z.object({

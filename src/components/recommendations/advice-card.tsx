@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { HealthRecsOutput } from '@/ai/flows/personalized-health-recommendations';
+import { HealthRecsOutput } from '@/lib/types';
 import { CheckCircle, ShieldAlert } from 'lucide-react';
 
 type AdviceCardProps = {
