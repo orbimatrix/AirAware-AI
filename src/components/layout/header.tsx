@@ -1,55 +1,45 @@
 'use client';
-import Link from "next/link";
-import { Leaf, Menu } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useUser } from "@/firebase";
+import Link from 'next/link';
+import { Leaf, Menu } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useUser } from '@/firebase';
 import {
   Sheet,
   SheetContent,
   SheetTrigger,
   SheetClose,
-} from "@/components/ui/sheet";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/sheet';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const navItems = [
-    { label: "About", href: "/about" },
     { label: "Features", href: "/#features" },
+    { label: "About", href: "/about" },
 ];
 
-const DesktopNavLink = ({ href, children }: { href: string, children: React.ReactNode }) => {
-    const pathname = usePathname();
-    const isActive = pathname === href;
-  
-    return (
-        <Link href={href}>
-          <span className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            isActive ? "text-primary" : "text-muted-foreground"
-          )}>
-            {children}
-          </span>
-        </Link>
-    );
-};
+function NavLink({ href, children, isMobile = false }: { href: string; children: React.ReactNode; isMobile?: boolean }) {
+  const pathname = usePathname();
+  const isActive = pathname === href;
 
-const MobileNavLink = ({ href, children }: { href: string, children: React.ReactNode }) => {
-    const pathname = usePathname();
-    const isActive = pathname === href;
-  
-    return (
-      <SheetClose asChild>
-        <Link href={href}>
-          <span className={cn(
-            "text-lg font-medium transition-colors hover:text-primary",
-            isActive ? "text-primary" : "text-muted-foreground"
-          )}>
-            {children}
-          </span>
-        </Link>
-      </SheetClose>
-    );
-};
+  const link = (
+    <Link
+      href={href}
+      className={cn(
+        "text-sm font-medium transition-colors hover:text-primary",
+        isActive ? "text-primary" : "text-muted-foreground",
+        isMobile && "text-lg"
+      )}
+    >
+      {children}
+    </Link>
+  );
+
+  if (isMobile) {
+    return <SheetClose asChild>{link}</SheetClose>;
+  }
+
+  return link;
+}
 
 
 export function Header() {
@@ -67,7 +57,7 @@ export function Header() {
         
         {/* Desktop Navigation */}
         <nav className="hidden sm:flex items-center gap-6">
-          {navItems.map(item => <DesktopNavLink key={item.href} href={item.href}>{item.label}</DesktopNavLink>)}
+          {navItems.map(item => <NavLink key={item.href} href={item.href}>{item.label}</NavLink>)}
         </nav>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -98,18 +88,18 @@ export function Header() {
             </SheetTrigger>
             <SheetContent>
               <nav className="flex flex-col gap-6 mt-8">
-                {navItems.map(item => <MobileNavLink key={item.href} href={item.href}>{item.label}</MobileNavLink>)}
+                {navItems.map(item => <NavLink key={item.href} href={item.href} isMobile>{item.label}</NavLink>)}
               </nav>
               <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-4">
                  {!isUserLoading && !user && (
                     <>
                         <SheetClose asChild>
-                            <Button asChild variant="outline">
+                            <Button asChild variant="outline" className='w-full'>
                                 <Link href="/login">Log In</Link>
                             </Button>
                         </SheetClose>
                         <SheetClose asChild>
-                             <Button asChild>
+                             <Button asChild className='w-full'>
                                 <Link href="/signup">Sign Up</Link>
                             </Button>
                         </SheetClose>
