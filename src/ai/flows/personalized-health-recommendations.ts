@@ -9,7 +9,6 @@
  * - HealthRecsOutput - The return type for the function.
  */
 
-import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 
 export const HealthRecsInputSchema = z.object({
@@ -43,67 +42,93 @@ export const HealthRecsOutputSchema = z.object({
 });
 export type HealthRecsOutput = z.infer<typeof HealthRecsOutputSchema>;
 
+
+function getAqiCategory(aqi: number) {
+    if (aqi <= 50) return 'Good';
+    if (aqi <= 100) return 'Moderate';
+    if (aqi <= 150) return 'Unhealthy for Sensitive Groups';
+    if (aqi <= 200) return 'Unhealthy';
+    if (aqi <= 300) return 'Very Unhealthy';
+    return 'Hazardous';
+}
+
+function isSensitive(input: HealthRecsInput): boolean {
+    if (input.age && (input.age < 12 || input.age > 65)) {
+        return true;
+    }
+    if (input.healthConditions && input.healthConditions.length > 0) {
+        return true;
+    }
+    return false;
+}
+
 export async function personalizedHealthRecommendations(
   input: HealthRecsInput
 ): Promise<HealthRecsOutput> {
-  return recommendationsFlow(input);
-}
 
-const recommendationsFlow = ai.defineFlow(
-  {
-    name: 'personalizedHealthRecommendations',
-    inputSchema: HealthRecsInputSchema,
-    outputSchema: HealthRecsOutputSchema,
-  },
-  async (input) => {
-    const prompt = `You are a public health expert specializing in environmental health. Your task is to provide clear, actionable health recommendations for a user in Pakistan based on the current Air Quality Index (AQI) and their personal health profile.
+  const aqiCategory = getAqiCategory(input.aqi);
+  const userIsSensitive = isSensitive(input);
 
-    **Context:**
-    - Current AQI: ${input.aqi}
-    - User Age: ${input.age || 'Not provided'}
-    - Pre-existing Conditions: ${
-      input.healthConditions?.join(', ') || 'None provided'
-    }
+  let overallRecommendation = "";
+  const detailedAdvice : {title: string, description: string}[] = [];
 
-    **Your Response MUST be in JSON format and adhere to the output schema.**
-
-    **Analysis and Logic:**
-    1.  **Determine AQI Category:**
-        - 0-50: Good
-        - 51-100: Moderate
-        - 101-150: Unhealthy for Sensitive Groups
-        - 151-200: Unhealthy
-        - 201-300: Very Unhealthy
-        - 301+: Hazardous
-
-    2.  **Assess User Sensitivity:**
-        - "Sensitive Groups" include children (under 12), elderly (over 65), and anyone with conditions like Asthma, COPD, Heart Disease.
-        - If age or health conditions fall into this category, the user is 'sensitive'. Otherwise, they are 'general population'.
-
-    3.  **Generate Recommendations:**
-        - **overallRecommendation:** Create a single, primary piece of advice. This should be the most important action the user should take.
-        - **detailedAdvice:** Provide 3-4 specific, detailed tips. Tailor the advice based on the AQI level and user sensitivity. For example, at "Unhealthy for Sensitive Groups", a sensitive user gets a strong warning, while the general population gets a milder one. At "Unhealthy", everyone should take precautions.
-
-    **Example Tone:**
-    - Be reassuring but clear about risks.
-    - Focus on practical, actionable steps (e.g., "Wear a well-fitting N95 mask," "Use an air purifier with a HEPA filter," "Avoid strenuous outdoor activity").
-    - For "Good" AQI, be encouraging (e.g., "It's a great day for outdoor activities!").
-
-    Now, generate the response for the given user context.`;
-
-    const llmResponse = await ai.generate({
-      prompt: prompt,
-      model: 'googleai/gemini-2.5-flash-preview',
-      output: {
-        format: 'json',
-        schema: HealthRecsOutputSchema,
-      },
-    });
-
-    const output = llmResponse.output();
-    if (!output) {
-      throw new Error('Failed to generate health recommendations.');
-    }
-    return output;
+  switch (aqiCategory) {
+    case 'Good':
+      overallRecommendation = "It's a great day for outdoor activities! The air quality is excellent.";
+      detailedAdvice.push(
+          { title: "Enjoy the Fresh Air", description: "Take the opportunity to go for a walk, run, or have a picnic outside." },
+          { title: "Ventilate Your Home", description: "Open your windows to let in fresh, clean air and improve indoor air quality." }
+      );
+      break;
+    case 'Moderate':
+      overallRecommendation = "Air quality is acceptable. Unusually sensitive individuals should consider reducing prolonged or heavy exertion outdoors.";
+       detailedAdvice.push(
+          { title: "Monitor Symptoms", description: "If you're in a sensitive group, pay attention to any symptoms like coughing or shortness of breath." },
+          { title: "General Population", description: "For most people, it's still a good day to be active outside." }
+      );
+      break;
+    case 'Unhealthy for Sensitive Groups':
+        if(userIsSensitive) {
+            overallRecommendation = "Air quality is unhealthy for you. Limit prolonged outdoor exertion and stay indoors if possible.";
+            detailedAdvice.push(
+                { title: "Wear a Mask", description: "If you must go outside, wear a well-fitting N95 or KN95 mask to filter pollutants." },
+                { title: "Use Air Purifiers", description: "Run an air purifier with a HEPA filter at home to keep indoor air clean." }
+            );
+        } else {
+            overallRecommendation = "Air quality is generally acceptable, but keep an eye on it if you're feeling sensitive today.";
+            detailedAdvice.push(
+                { title: "Consider Shorter Outings", description: "You're likely fine, but consider reducing the intensity of long outdoor workouts." }
+            );
+        }
+      break;
+    case 'Unhealthy':
+      overallRecommendation = "Everyone should reduce heavy outdoor exertion. It's recommended to limit time spent outdoors.";
+       detailedAdvice.push(
+          { title: "Avoid Strenuous Activities", description: "Postpone activities like running, cycling, or other intense sports outdoors." },
+          { title: "Keep Indoor Air Clean", description: "Close windows to avoid bringing outdoor pollution inside. Use air purifiers if available." },
+          { title: "Sensitive Groups Beware", description: "Children, the elderly, and people with heart or lung disease should avoid all outdoor physical activity." }
+      );
+      break;
+    case 'Very Unhealthy':
+      overallRecommendation = "This is a serious health alert. Everyone should avoid all outdoor exertion.";
+      detailedAdvice.push(
+          { title: "Stay Indoors", description: "Remain indoors and keep activity levels low. Keep windows and doors closed." },
+          { title: "Use HEPA Filters", description: "Run air purifiers on a high setting to create a clean air sanctuary indoors." },
+          { title: "Wear a Protective Mask", description: "If you absolutely must go outside, a high-quality N95 or P100 mask is essential." }
+      );
+      break;
+    case 'Hazardous':
+      overallRecommendation = "Hazardous air quality warning. Everyone should remain indoors and avoid all physical activity.";
+      detailedAdvice.push(
+          { title: "Avoid All Outdoor Exposure", description: "This is an emergency condition. Going outside is a significant health risk." },
+          { title: "Seal Your Home", description: "Keep your indoor environment as sealed as possible. Re-circulate air with your HVAC system if it has a clean filter." },
+          { title: "Follow Official Guidance", description: "Pay attention to alerts and instructions from local health authorities." }
+      );
+      break;
   }
-);
+
+  return {
+    overallRecommendation,
+    detailedAdvice,
+  };
+}
