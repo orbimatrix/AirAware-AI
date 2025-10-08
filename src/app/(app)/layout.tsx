@@ -12,7 +12,6 @@ import { DashboardHeader } from "@/components/dashboard-header";
 import { MainNav } from "@/components/main-nav";
 import { Badge } from "@/components/ui/badge";
 import { AuthLayout } from "@/components/auth-layout";
-import { Footer } from "@/components/layout/footer";
 
 export default function AppLayout({
   children,
@@ -40,8 +39,7 @@ export default function AppLayout({
         </Sidebar>
         <SidebarInset>
           <DashboardHeader />
-          <main className="p-4 sm:p-6">{children}</main>
-          <Footer />
+          <main className="flex-grow p-4 sm:p-6">{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </AuthLayout>
