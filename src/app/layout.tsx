@@ -3,7 +3,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 import { FirebaseClientProvider } from "@/firebase/client-provider";
-import { Header } from "@/components/layout/header";
+import { PublicLayout } from "@/components/layout/public-layout";
 
 export const metadata: Metadata = {
   title: "Saaf Hawa",
@@ -35,9 +35,10 @@ export default function RootLayout({
       </head>
       <body className={cn("font-body antialiased min-h-screen bg-background flex flex-col")}>
         <FirebaseClientProvider>
-          <Header />
-          <main className="flex-grow">{children}</main>
-          <Toaster />
+            <PublicLayout>
+                {children}
+            </PublicLayout>
+            <Toaster />
         </FirebaseClientProvider>
       </body>
     </html>
