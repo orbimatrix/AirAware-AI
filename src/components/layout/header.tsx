@@ -17,33 +17,9 @@ const navItems = [
     { label: "About", href: "/about" },
 ];
 
-function NavLink({ href, children, isMobile = false }: { href: string; children: React.ReactNode; isMobile?: boolean }) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
-
-  const link = (
-    <Link
-      href={href}
-      className={cn(
-        "text-sm font-medium transition-colors hover:text-primary",
-        isActive ? "text-primary" : "text-muted-foreground",
-        isMobile && "text-lg"
-      )}
-    >
-      {children}
-    </Link>
-  );
-
-  if (isMobile) {
-    return <SheetClose asChild>{link}</SheetClose>;
-  }
-
-  return link;
-}
-
-
 export function Header() {
   const { user, isUserLoading } = useUser();
+  const pathname = usePathname();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -57,7 +33,18 @@ export function Header() {
         
         {/* Desktop Navigation */}
         <nav className="hidden sm:flex items-center gap-6">
-          {navItems.map(item => <NavLink key={item.href} href={item.href}>{item.label}</NavLink>)}
+          {navItems.map(item => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "text-sm font-medium transition-colors hover:text-primary",
+                pathname === item.href ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
 
         <div className="flex items-center gap-2 ml-auto">
@@ -88,7 +75,19 @@ export function Header() {
             </SheetTrigger>
             <SheetContent>
               <nav className="flex flex-col gap-6 mt-8">
-                {navItems.map(item => <NavLink key={item.href} href={item.href} isMobile>{item.label}</NavLink>)}
+                {navItems.map(item => (
+                  <SheetClose asChild key={item.href}>
+                     <Link
+                      href={item.href}
+                      className={cn(
+                        "text-lg font-medium transition-colors hover:text-primary",
+                        pathname === item.href ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      {item.label}
+                    </Link>
+                  </SheetClose>
+                ))}
               </nav>
               <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-4">
                  {!isUserLoading && !user && (
