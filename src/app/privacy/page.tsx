@@ -4,7 +4,8 @@ export const metadata = {
   
   export default function PrivacyPage() {
     return (
-      <div className="prose prose-lg mx-auto py-12 px-4">
+      <div className="container mx-auto max-w-4xl py-12 sm:py-20 px-4">
+        <div className="prose prose-lg dark:prose-invert mx-auto">
         <h1>Privacy Policy</h1>
         <p>
           Your privacy is important to us. It is Saaf Hawa's policy to respect
@@ -53,6 +54,7 @@ export const metadata = {
         </p>
   
         <p>Last updated: {new Date().toLocaleDateString()}</p>
+        </div>
       </div>
     );
   }

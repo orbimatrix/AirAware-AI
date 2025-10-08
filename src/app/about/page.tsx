@@ -4,7 +4,8 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <div className="prose prose-lg mx-auto py-12 px-4">
+    <div className="container mx-auto max-w-4xl py-12 sm:py-20 px-4">
+      <div className="prose prose-lg dark:prose-invert mx-auto">
       <h1>About Saaf Hawa</h1>
       <p>
         Welcome to Saaf Hawa, your personal guide to understanding and improving
@@ -46,6 +47,7 @@ export default function AboutPage() {
         actionable, we hope to contribute to a cleaner, healthier Pakistan for
         generations to come.
       </p>
+      </div>
     </div>
   );
 }

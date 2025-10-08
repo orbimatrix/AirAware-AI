@@ -4,7 +4,8 @@ export const metadata = {
   
   export default function TermsPage() {
     return (
-      <div className="prose prose-lg mx-auto py-12 px-4">
+      <div className="container mx-auto max-w-4xl py-12 sm:py-20 px-4">
+        <div className="prose prose-lg dark:prose-invert mx-auto">
         <h1>Terms of Service</h1>
         <p>
           By accessing and using Saaf Hawa, you agree to comply with and be bound
@@ -46,6 +47,7 @@ export const metadata = {
         </p>
   
         <p>Last updated: {new Date().toLocaleDateString()}</p>
+        </div>
       </div>
     );
   }
