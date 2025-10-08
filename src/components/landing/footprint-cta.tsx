@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { Car, Footprints, Utensils, Home } from "lucide-react";
+import { Footprints } from "lucide-react";
 
 export function FootprintCta() {
   return (
     <section className="py-20 lg:py-28">
       <div className="container mx-auto px-4">
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-           <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-lg order-last lg:order-first p-8 bg-muted/50 border">
+           <div className="relative aspect-square lg:aspect-[4/3] rounded-2xl overflow-hidden shadow-lg order-last lg:order-first p-8 bg-muted/50 border">
               <div className="flex h-full items-center justify-center">
                 <div className="text-center">
                     <Footprints className="h-20 w-20 text-primary mx-auto mb-4" />
