@@ -1,3 +1,4 @@
+
 'use server';
 
 import { MemorySaver } from '@langchain/langgraph';
@@ -93,8 +94,8 @@ const agentCheckpointer = new MemorySaver();
 
 const tools: Tool[] = [new EonetTool(), new UsgsQuakesTool(), new OwmWeatherTool()];
 
-const agent = createReactAgent({
-  llm: llm.bindTools(tools), // Correctly bind tools to the LLM
+const agentExecutor = createReactAgent({
+  llm,
   tools,
   checkpointSaver: agentCheckpointer,
 });
@@ -117,7 +118,7 @@ export async function getHazardInfo(
 
     try {
         const threadId = `hazards-thread-${Date.now()}`;
-        const finalState = await agent.invoke(
+        const finalState = await agentExecutor.invoke(
             { messages: [new HumanMessage(query)] },
             { configurable: { thread_id: threadId } }
         );
@@ -130,8 +131,8 @@ export async function getHazardInfo(
             content = lastMessage.content;
         } else if (Array.isArray(lastMessage.content)) {
             // If content is an array (potentially with text and other parts), find the text part.
-            const textPart = lastMessage.content.find(part => typeof part === 'string' || part.type === 'text');
-            content = textPart ? (typeof textPart === 'string' ? textPart : textPart.text) : JSON.stringify(lastMessage.content);
+            const textPart = lastMessage.content.find(part => typeof part === 'string' || (typeof part === 'object' && part.type === 'text'));
+            content = textPart ? (typeof textPart === 'string' ? textPart : (textPart as any).text) : JSON.stringify(lastMessage.content);
         } else {
             content = JSON.stringify(lastMessage.content);
         }
