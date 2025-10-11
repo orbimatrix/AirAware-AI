@@ -1,12 +1,7 @@
 
 'use server';
 
-import { MemorySaver } from '@langchain/langgraph';
-import { HumanMessage, BaseMessage } from '@langchain/core/messages';
-import { Tool } from '@langchain/core/tools';
-import { ChatOpenAI } from '@langchain/openai';
-import { StateGraph, END } from "@langchain/langgraph";
-import { ToolExecutor } from "@langchain/langgraph/prebuilt";
+import { OpenAI } from "openai";
 import { z } from "zod";
 import { zodToJsonSchema } from 'zod-to-json-schema';
 
@@ -16,28 +11,35 @@ type HazardAgentState = {
   error: string | null;
 };
 
-// 1. Configure AIML client via ChatOpenAI
+// 1. Configure AIML (OpenAI-compatible client with custom baseURL)
 const AIML_API_KEY = process.env.AIML_API_KEY;
 const OWM_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+const AIML_BASE_URL = "https://api.aimlapi.com/v1";
 
 if (!AIML_API_KEY || !OWM_KEY) {
   console.error("Missing required API keys: AIML_API_KEY or NEXT_PUBLIC_OPENWEATHER_API_KEY");
 }
 
-const llm = new ChatOpenAI({
+const aimlClient = new OpenAI({
   apiKey: AIML_API_KEY,
-  model: "mistralai/Mistral-7B-Instruct-v0.2",
-  temperature: 0.2,
-  maxTokens: 600,
-  configuration: {
-    baseURL: "https://api.aimlapi.com/v1",
-  }
+  baseURL: AIML_BASE_URL,
 });
+
+// Base Tool class for type consistency
+class Tool {
+    name: string = '';
+    description: string = '';
+    schema: z.ZodObject<any> = z.object({});
+    async _call(input: any): Promise<string> {
+        throw new Error("Not implemented");
+    }
+}
+
 
 // 2. NASA EONET tool
 class EonetTool extends Tool {
     name = "eonet_events";
-    description = "Get recent natural events from NASA EONET. Input should be a JSON object with 'days' and optional 'source'. Example: {\"days\": 7, \"source\": \"VIIRS_SNPP_NRT\"}";
+    description = "Get recent natural events from NASA EONET, especially for wildfires. Input should be a JSON object with 'days' and 'source' (e.g., 'VIIRS_SNPP_NRT' for wildfires).";
     
     schema = z.object({
         days: z.number().optional().default(7).describe("Number of past days to fetch events for."),
@@ -66,7 +68,7 @@ class UsgsQuakesTool extends Tool {
     name = "usgs_earthquakes";
     description = "Get recent earthquakes from USGS. Fetches all quakes from the last hour by default.";
     
-    schema = z.object({}); // No input needed
+    schema = z.object({});
 
     async _call() {
         try {
@@ -79,7 +81,6 @@ class UsgsQuakesTool extends Tool {
         }
     }
 }
-
 
 // 4. OpenWeatherMap tool
 class OwmWeatherTool extends Tool {
@@ -105,64 +106,77 @@ class OwmWeatherTool extends Tool {
     }
 }
 
-// 5. Create the agent
-const agentCheckpointer = new MemorySaver();
-const tools: Tool[] = [new EonetTool(), new UsgsQuakesTool(), new OwmWeatherTool()];
-const toolExecutor = new ToolExecutor({ tools });
 
-const agentState = {
-    messages: {
-        value: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
-        default: () => [],
-    },
-};
+// --- Agent Implementation ---
 
-const agentWithTools = llm.bind({
-    tools: tools.map(tool => ({
-        type: "function",
-        function: {
-            name: tool.name,
-            description: tool.description,
-            parameters: zodToJsonSchema(tool.schema),
-        },
-    })),
-});
-
-
-const agentNode = async (state: { messages: BaseMessage[] }) => {
-    const result = await agentWithTools.invoke(state.messages);
-    return { messages: [result] };
-};
-
-const toolNode = async (state: { messages: BaseMessage[] }) => {
-    const result = await toolExecutor.invoke(state.messages[state.messages.length - 1]);
-    return {
-        messages: [result],
-    };
-};
-
-function shouldContinue(state: { messages: BaseMessage[] }) {
-    const { tool_calls } = state.messages[state.messages.length - 1].additional_kwargs ?? {};
-    if (tool_calls?.length) {
-        return "tools";
+// Convert Tool instances to OpenAI 'functions' array
+function toolsToFunctions(tools: Tool[]) {
+  return tools.map(tool => ({
+    type: "function" as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: zodToJsonSchema(tool.schema),
     }
-    return END;
+  }));
 }
 
-const workflow = new StateGraph({
-    channels: agentState,
-});
+// Helper: call tool by name and JSON-parse the args
+async function callToolByName(tools: Tool[], name: string, argsJson: string) {
+  const tool = tools.find(t => t.name === name);
+  if (!tool) throw new Error(`Unknown tool: ${name}`);
+  let args;
+  try {
+    args = JSON.parse(argsJson ?? "{}");
+  } catch (e) {
+    args = {};
+  }
+  const result = await tool._call(args);
+  return typeof result === "string" ? result : JSON.stringify(result);
+}
 
-workflow.addNode("agent", agentNode);
-workflow.addNode("tools", toolNode);
+// Core chat+function loop
+async function runAgentWithFunctions(userQuery: string, tools: Tool[]) {
+  const functions = toolsToFunctions(tools);
 
-workflow.setEntryPoint("agent");
+  // 1) Initial call
+  const initialResp = await aimlClient.chat.completions.create({
+    model: "mistralai/Mistral-7B-Instruct-v0.2",
+    messages: [{ role: "user", content: userQuery }],
+    tools: functions,
+    tool_choice: "auto",
+    temperature: 0.2,
+    max_tokens: 800,
+  });
 
-workflow.addConditionalEdges("agent", shouldContinue);
+  const message = initialResp.choices?.[0]?.message;
 
-workflow.addEdge("tools", "agent");
+  // If model asked to call a tool
+  if (message?.tool_calls) {
+    const toolCall = message.tool_calls[0];
+    const fnName = toolCall.function.name;
+    const fnArgs = toolCall.function.arguments ?? "{}";
 
-const agentExecutor = workflow.compile({ checkpointer: agentCheckpointer });
+    const toolOutput = await callToolByName(tools, fnName, fnArgs);
+
+    // Send function result back to model
+    const followupResp = await aimlClient.chat.completions.create({
+      model: "mistralai/Mistral-7B-Instruct-v0.2",
+      messages: [
+        { role: "user", content: userQuery },
+        { role: "assistant", tool_calls: message.tool_calls, content: null },
+        { role: "tool", tool_call_id: toolCall.id, name: fnName, content: toolOutput },
+      ],
+      temperature: 0.2,
+      max_tokens: 800,
+    });
+
+    return followupResp.choices?.[0]?.message?.content ?? JSON.stringify(followupResp);
+  } else {
+    // No function call — just return model content
+    return message?.content ?? JSON.stringify(initialResp);
+  }
+}
 
 // Server Action to invoke the agent
 export async function getHazardInfo(
@@ -175,32 +189,15 @@ export async function getHazardInfo(
         return { result: null, error: "Please provide a location or query." };
     }
 
-    if (!AIML_API_KEY || !OWM_KEY) {
+    if (!AIML_API_KEY) {
        return { result: null, error: "Server is missing required API keys for hazard detection." };
     }
 
     try {
-        const threadId = `hazards-thread-${Date.now()}`;
-        const finalState = await agentExecutor.invoke(
-            { messages: [new HumanMessage(query)] },
-            { configurable: { thread_id: threadId } }
-        );
+        const tools: Tool[] = [new EonetTool(), new UsgsQuakesTool(), new OwmWeatherTool()];
+        const finalResult = await runAgentWithFunctions(query, tools);
 
-        // Get the last message from the agent
-        const lastMessage = finalState.messages[finalState.messages.length - 1];
-        
-        let content: string;
-        if (typeof lastMessage.content === 'string') {
-            content = lastMessage.content;
-        } else if (Array.isArray(lastMessage.content)) {
-            // If content is an array (potentially with text and other parts), find the text part.
-            const textPart = lastMessage.content.find(part => typeof part === 'string' || (typeof part === 'object' && 'type' in part && part.type === 'text'));
-            content = textPart ? (typeof textPart === 'string' ? textPart : (textPart as any).text) : JSON.stringify(lastMessage.content);
-        } else {
-            content = JSON.stringify(lastMessage.content);
-        }
-
-        return { result: content, error: null };
+        return { result: finalResult, error: null };
     } catch (e: any) {
         console.error("Hazard agent invocation error:", e);
         return { result: null, error: e.message || "Failed to get hazard information from the AI agent." };
