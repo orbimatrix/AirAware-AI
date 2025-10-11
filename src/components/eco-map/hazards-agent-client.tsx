@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { AlertTriangle, Loader2, Sparkles, Wand } from 'lucide-react';
 import { getHazardInfo } from '@/app/(app)/eco-map/actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Badge } from '../ui/badge';
 
 function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
   return (
@@ -30,6 +31,17 @@ export function HazardsAgentClient() {
         formAction(formData);
     });
   };
+
+  let parsedResult = null;
+  if (state.result) {
+    try {
+      parsedResult = JSON.parse(state.result);
+    } catch (e) {
+      // If result is not JSON, treat it as a plain string.
+      parsedResult = { answer: state.result, query: new FormData(document.querySelector('form')!).get('query') };
+    }
+  }
+
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
@@ -76,7 +88,7 @@ export function HazardsAgentClient() {
             </Alert>
         )}
         
-        {state.result && (
+        {parsedResult && (
             <Card>
                 <CardHeader className='flex-row items-start gap-3 space-y-0'>
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary shrink-0">
@@ -84,14 +96,19 @@ export function HazardsAgentClient() {
                     </div>
                     <div>
                         <CardTitle>Agent Response</CardTitle>
-                        <CardDescription>Here is the hazard summary based on your query.</CardDescription>
+                        <CardDescription>
+                            Hazard summary for: <span className="font-semibold italic">"{parsedResult.query}"</span>
+                        </CardDescription>
                     </div>
                 </CardHeader>
-                <CardContent>
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                        <pre className="whitespace-pre-wrap bg-muted p-4 rounded-md text-foreground">{state.result}</pre>
-                    </div>
+                <CardContent className="space-y-4">
+                    <p className="text-foreground/90">{parsedResult.answer || "The agent did not provide a textual answer."}</p>
                 </CardContent>
+                 {parsedResult.source && (
+                    <CardFooter>
+                        <Badge variant="outline">Source: {parsedResult.source}</Badge>
+                    </CardFooter>
+                )}
             </Card>
         )}
     </div>
