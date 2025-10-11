@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useTransition } from 'react';
@@ -113,7 +114,7 @@ export function HazardsAgentClient() {
                                 {parsedResult.raw.results.map((item: any, index: number) => (
                                     <div key={index} className="text-sm border-l-2 pl-4">
                                         <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline block truncate">{item.title}</a>
-                                        <p className="text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                                        <p className="text-muted-foreground mt-1 text-sm">{item.content}</p>
                                     </div>
                                 ))}
                             </div>
@@ -133,3 +134,4 @@ export function HazardsAgentClient() {
     </div>
   );
 }
+
