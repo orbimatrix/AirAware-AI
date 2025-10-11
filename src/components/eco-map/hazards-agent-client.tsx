@@ -5,10 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, Loader2, Sparkles, Wand } from 'lucide-react';
+import { AlertTriangle, Globe, Loader2, Sparkles, Wand } from 'lucide-react';
 import { getHazardInfo } from '@/app/(app)/eco-map/actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
+import { Separator } from '../ui/separator';
 
 function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
   return (
@@ -101,12 +102,30 @@ export function HazardsAgentClient() {
                         </CardDescription>
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    <p className="text-foreground/90">{parsedResult.answer || "The agent did not provide a textual answer."}</p>
+                <CardContent className="space-y-6">
+                    <p className="text-foreground/90 leading-relaxed">{parsedResult.answer || "The agent did not provide a textual answer."}</p>
+                    
+                    {parsedResult.raw?.results && parsedResult.raw.results.length > 0 && (
+                        <div>
+                            <Separator className="my-4" />
+                            <h4 className="text-sm font-semibold text-muted-foreground mb-3">Sources Consulted</h4>
+                            <div className="space-y-4">
+                                {parsedResult.raw.results.map((item: any, index: number) => (
+                                    <div key={index} className="text-sm border-l-2 pl-4">
+                                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline block truncate">{item.title}</a>
+                                        <p className="text-muted-foreground mt-1 line-clamp-2">{item.content}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </CardContent>
                  {parsedResult.source && (
                     <CardFooter>
-                        <Badge variant="outline">Source: {parsedResult.source}</Badge>
+                        <Badge variant="outline" className="flex items-center gap-1.5">
+                            <Globe className="h-3 w-3" />
+                           Source: {parsedResult.source}
+                        </Badge>
                     </CardFooter>
                 )}
             </Card>
