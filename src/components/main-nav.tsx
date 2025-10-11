@@ -6,7 +6,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from '@/components/ui/sidebar';
-import { Home, Map, HeartPulse, Footprints, Trophy, ShieldAlert, MessageSquarePlus, BookHeart, GraduationCap, User } from 'lucide-react';
+import { Home, Map, HeartPulse, Footprints, Trophy, ShieldAlert, BookHeart, GraduationCap, User, Bot } from 'lucide-react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home, tooltip: 'Dashboard' },
@@ -15,7 +15,7 @@ const navItems = [
   { href: '/health-journal', label: 'Health Journal', icon: BookHeart, tooltip: 'Health Journal' },
   { href: '/carbon-footprint', label: 'Carbon Footprint', icon: Footprints, tooltip: 'Carbon Footprint' },
   { href: '/challenges', label: 'Eco-Challenges', icon: Trophy, tooltip: 'Eco-Challenges' },
-  { href: '/eco-map', label: 'Eco-Map', icon: MessageSquarePlus, tooltip: 'Eco-Map' },
+  { href: '/eco-map', label: 'Hazard Agent', icon: Bot, tooltip: 'Hazard Agent' },
   { href: '/education', label: 'Education', icon: GraduationCap, tooltip: 'Education' },
   { href: '/profile', label: 'Profile', icon: User, tooltip: 'Profile' },
 ];
