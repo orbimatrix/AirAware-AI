@@ -2,10 +2,13 @@
 'use server';
 
 import { MemorySaver } from '@langchain/langgraph';
-import { HumanMessage } from '@langchain/core/messages';
+import { HumanMessage, BaseMessage } from '@langchain/core/messages';
 import { Tool } from '@langchain/core/tools';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
 import { ChatOpenAI } from '@langchain/openai';
+import { StateGraph, END } from "@langchain/langgraph";
+import { ToolExecutor } from "@langchain/langgraph/prebuilt";
+import { z } from "zod";
+import { zodToJsonSchema } from 'zod-to-json-schema';
 
 // Define state for the form action
 type HazardAgentState = {
@@ -32,14 +35,19 @@ const llm = new ChatOpenAI({
 // 2. NASA EONET tool
 class EonetTool extends Tool {
     name = "eonet_events";
-    description = "Get recent natural events from NASA EONET. Input should be a JSON string with 'days' and optional 'category'. Example: {'days': 7, 'category': 'wildfires'}";
+    description = "Get recent natural events from NASA EONET. Input should be a JSON string with 'days' and optional 'category'. Example: {\"days\": 7, \"category\": \"wildfires\"}";
+    
+    // Zod schema for input validation
+    schema = z.object({
+        days: z.number().optional().describe("Number of past days to fetch events for."),
+        category: z.string().optional().describe("Category of events (e.g., 'wildfires', 'severeStorms').")
+    });
 
-    async _call(input: string) {
+    async _call(input: z.infer<this['schema']>) {
         try {
-            const params = JSON.parse(input);
             const url = new URL("https://eonet.gsfc.nasa.gov/api/v3/events");
-            if (params.days) url.searchParams.set("days", String(params.days));
-            if (params.category) url.searchParams.set("category", params.category);
+            if (input.days) url.searchParams.set("days", String(input.days));
+            if (input.category) url.searchParams.set("category", input.category);
             const res = await fetch(url.toString());
             if (!res.ok) return `Error fetching EONET data: ${res.statusText}`;
             return JSON.stringify(await res.json());
@@ -53,6 +61,8 @@ class EonetTool extends Tool {
 class UsgsQuakesTool extends Tool {
     name = "usgs_earthquakes";
     description = "Get recent earthquakes from USGS. Fetches all quakes from the last hour by default.";
+    
+    schema = z.object({}); // No input needed
 
     async _call() {
         try {
@@ -70,14 +80,19 @@ class UsgsQuakesTool extends Tool {
 // 4. OpenWeatherMap tool
 class OwmWeatherTool extends Tool {
     name = "openweathermap_weather_and_air_quality";
-    description = "Get current weather and air quality from OpenWeatherMap for a given latitude and longitude. Input must be a string 'lat,lon'. Example: '24.8607,67.0011'";
+    description = "Get current weather and air quality from OpenWeatherMap for a given latitude and longitude.";
+    
+    schema = z.object({
+        lat: z.number().describe("Latitude"),
+        lon: z.number().describe("Longitude"),
+    })
 
-    async _call(input: string) {
+    async _call(input: z.infer<this['schema']>) {
          if (!OWM_KEY) throw new Error("OPENWEATHERMAP_API_KEY is not configured.");
         try {
-            const [lat, lon] = input.split(",").map(s => s.trim());
+            const { lat, lon } = input;
             if (isNaN(Number(lat)) || isNaN(Number(lon))) {
-                return "Invalid input. Please provide latitude and longitude as a comma-separated string, e.g., '24.8607,67.0011'";
+                return "Invalid input. Please provide latitude and longitude.";
             }
             const wurl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric`;
             const aurl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`;
@@ -91,15 +106,62 @@ class OwmWeatherTool extends Tool {
 
 // 5. Create the agent
 const agentCheckpointer = new MemorySaver();
-
 const tools: Tool[] = [new EonetTool(), new UsgsQuakesTool(), new OwmWeatherTool()];
+const toolExecutor = new ToolExecutor({ tools });
 
-const agentExecutor = createReactAgent({
-  llm,
-  tools,
-  checkpointSaver: agentCheckpointer,
+const agentState = {
+    messages: {
+        value: (x: BaseMessage[], y: BaseMessage[]) => x.concat(y),
+        default: () => [],
+    },
+};
+
+const agentWithTools = llm.bind({
+    tools: tools.map(tool => ({
+        type: "function",
+        function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: zodToJsonSchema(tool.schema),
+        },
+    })),
 });
 
+
+const agentNode = async (state: { messages: BaseMessage[] }) => {
+    const result = await agentWithTools.invoke(state.messages);
+    return { messages: [result] };
+};
+
+const toolNode = async (state: { messages: BaseMessage[] }) => {
+    const result = await toolExecutor.invoke(state.messages[state.messages.length - 1]);
+    return {
+        messages: [result],
+    };
+};
+
+function shouldContinue(state: { messages: BaseMessage[] }) {
+    const { tool_calls } = state.messages[state.messages.length - 1].additional_kwargs;
+    if (tool_calls?.length) {
+        return "tools";
+    }
+    return END;
+}
+
+const workflow = new StateGraph({
+    channels: agentState,
+});
+
+workflow.addNode("agent", agentNode);
+workflow.addNode("tools", toolNode);
+
+workflow.setEntryPoint("agent");
+
+workflow.addConditionalEdges("agent", shouldContinue);
+
+workflow.addEdge("tools", "agent");
+
+const agentExecutor = workflow.compile({ checkpointer: agentCheckpointer });
 
 // Server Action to invoke the agent
 export async function getHazardInfo(
