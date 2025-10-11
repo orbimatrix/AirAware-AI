@@ -26,10 +26,12 @@ if (!AIML_API_KEY || !OWM_KEY) {
 
 const llm = new ChatOpenAI({
   apiKey: AIML_API_KEY,
-  baseURL: "https://api.aimlapi.com/v1",
   model: "mistralai/Mistral-7B-Instruct-v0.2",
   temperature: 0.2,
   maxTokens: 600,
+  configuration: {
+    baseURL: "https://api.aimlapi.com/v1",
+  }
 });
 
 // 2. NASA EONET tool
