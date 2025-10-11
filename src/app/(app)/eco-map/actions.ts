@@ -37,11 +37,11 @@ const llm = new ChatOpenAI({
 // 2. NASA EONET tool
 class EonetTool extends Tool {
     name = "eonet_events";
-    description = "Get recent natural events from NASA EONET. Input should be a JSON string with 'days' and optional 'category'. Example: {\"days\": 7, \"category\": \"wildfires\"}";
+    description = "Get recent natural events from NASA EONET. Input should be a JSON object with 'days' and optional 'category'. Example: {\"days\": 7, \"category\": \"wildfires\"}";
     
     // Zod schema for input validation
     schema = z.object({
-        days: z.number().optional().describe("Number of past days to fetch events for."),
+        days: z.number().optional().default(7).describe("Number of past days to fetch events for."),
         category: z.string().optional().describe("Category of events (e.g., 'wildfires', 'severeStorms').")
     });
 
@@ -49,7 +49,9 @@ class EonetTool extends Tool {
         try {
             const url = new URL("https://eonet.gsfc.nasa.gov/api/v3/events");
             if (input.days) url.searchParams.set("days", String(input.days));
+            // Corrected to use the 'category' parameter as expected by the EONET API
             if (input.category) url.searchParams.set("category", input.category);
+            
             const res = await fetch(url.toString());
             if (!res.ok) return `Error fetching EONET data: ${res.statusText}`;
             return JSON.stringify(await res.json());
@@ -93,9 +95,6 @@ class OwmWeatherTool extends Tool {
          if (!OWM_KEY) throw new Error("OPENWEATHERMAP_API_KEY is not configured.");
         try {
             const { lat, lon } = input;
-            if (isNaN(Number(lat)) || isNaN(Number(lon))) {
-                return "Invalid input. Please provide latitude and longitude.";
-            }
             const wurl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric`;
             const aurl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`;
             const [w, a] = await Promise.all([fetch(wurl).then(r => r.json()), fetch(aurl).then(r => r.json())]);
@@ -143,7 +142,7 @@ const toolNode = async (state: { messages: BaseMessage[] }) => {
 };
 
 function shouldContinue(state: { messages: BaseMessage[] }) {
-    const { tool_calls } = state.messages[state.messages.length - 1].additional_kwargs;
+    const { tool_calls } = state.messages[state.messages.length - 1].additional_kwargs ?? {};
     if (tool_calls?.length) {
         return "tools";
     }
@@ -195,7 +194,7 @@ export async function getHazardInfo(
             content = lastMessage.content;
         } else if (Array.isArray(lastMessage.content)) {
             // If content is an array (potentially with text and other parts), find the text part.
-            const textPart = lastMessage.content.find(part => typeof part === 'string' || (typeof part === 'object' && part.type === 'text'));
+            const textPart = lastMessage.content.find(part => typeof part === 'string' || (typeof part === 'object' && 'type' in part && part.type === 'text'));
             content = textPart ? (typeof textPart === 'string' ? textPart : (textPart as any).text) : JSON.stringify(lastMessage.content);
         } else {
             content = JSON.stringify(lastMessage.content);
