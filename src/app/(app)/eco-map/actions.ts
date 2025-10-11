@@ -2,6 +2,120 @@
 "use server";
 import { OpenAI } from "openai";
 
+// --- Add/replace this section in your file (server-side) ---
+const TAVILY_KEY = process.env.TAVILY_API_KEY;
+const OWM_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+
+/** Helper: detect lat,lon string "lat,lon" */
+function parseLatLon(q: string) {
+  const m = q.trim().match(/^\s*([+-]?\d+(\.\d+)?)\s*,\s*([+-]?\d+(\.\d+)?)\s*$/);
+  if (!m) return null;
+  return { lat: Number(m[1]), lon: Number(m[3]) };
+}
+
+/** Query Tavily REST search endpoint robustly and try to extract a short answer.
+ *  Returns { ok: true, source: 'tavily', text, raw, tempC?: number } or { ok: false, error }
+ */
+async function queryTavilyRaw(query: string) {
+  if (!TAVILY_KEY) return { ok: false, error: "TAVILY_API_KEY not set" };
+
+  const url = "https://api.tavily.com/search";
+  const body = {
+    query,
+    include_answer: true,
+    include_raw_content: true,
+    max_results: 4,
+    search_depth: "basic",
+  };
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${TAVILY_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      let txt = "";
+      try { txt = await res.text(); } catch {}
+      return { ok: false, error: `Tavily HTTP ${res.status} ${res.statusText} ${txt ? `| ${txt.slice(0,500)}` : ""}` };
+    }
+
+    const j = await res.json();
+
+    // Defensive parsing: check likely answer places
+    const possibleAnswers: string[] = [];
+    if (j?.answer) possibleAnswers.push(String(j.answer));
+    if (j?.data?.answer) possibleAnswers.push(String(j.data.answer));
+    if (Array.isArray(j?.results)) {
+      for (const r of j.results.slice(0,4)) {
+        if (r?.answer) possibleAnswers.push(String(r.answer));
+        if (r?.snippet) possibleAnswers.push(String(r.snippet));
+        if (r?.text) possibleAnswers.push(String(r.text));
+        if (r?.title) possibleAnswers.push(String(r.title));
+      }
+    }
+    if (j?.items && Array.isArray(j.items)) {
+      for (const i of j.items.slice(0,4)) {
+        if (i?.snippet) possibleAnswers.push(String(i.snippet));
+      }
+    }
+
+    // pick first non-empty
+    const answer = possibleAnswers.find(a => !!a && String(a).trim().length > 0);
+
+    // try to detect a temperature in the answer using regex
+    const tempRegex = /(-?\d{1,3}(?:\.\d+)?)\s*°?\s*(C|F|c|f)|(-?\d{1,3}(?:\.\d+)?)\s*(degrees?)(\s*(C|F|c|f))?/i;
+    let detectedTempC: number | undefined = undefined;
+    if (answer) {
+      const m = answer.match(tempRegex);
+      if (m) {
+        // find number and unit
+        const num = Number(m[1] ?? m[3]);
+        const unit = (m[2] ?? m[6] ?? "C").toUpperCase();
+        if (!Number.isNaN(num)) {
+          detectedTempC = unit.startsWith("F") ? Math.round(((num - 32) * 5) / 9 * 10) / 10 : Math.round(num * 10) / 10;
+        }
+      }
+    }
+
+    return { ok: true, source: "tavily", text: answer ?? null, raw: j, tempC: detectedTempC ?? null };
+  } catch (err: any) {
+    return { ok: false, error: `Tavily fetch error: ${err?.message ?? String(err)}` };
+  }
+}
+
+/** Query OpenWeatherMap current weather (by q=city or lat/lon). Returns Celsius temp & raw response. */
+async function queryOpenWeather(query: string) {
+  if (!OWM_KEY) return { ok: false, error: "OpenWeatherMap key missing" };
+
+  try {
+    const ll = parseLatLon(query);
+    let url;
+    if (ll) {
+      url = `https://api.openweathermap.org/data/2.5/weather?lat=${ll.lat}&lon=${ll.lon}&appid=${OWM_KEY}&units=metric`;
+    } else {
+      // use q=city name (works with "Karachi" or "Karachi,PK")
+      url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(query)}&appid=${OWM_KEY}&units=metric`;
+    }
+
+    const res = await fetch(url);
+    if (!res.ok) {
+      const txt = await res.text().catch(()=>"");
+      return { ok: false, error: `OWM ${res.status} ${res.statusText} | ${txt}` };
+    }
+    const j = await res.json();
+    const tempC = j?.main?.temp ?? null;
+    const desc = j?.weather?.[0]?.description ?? null;
+    return { ok: true, source: "openweathermap", tempC, description: desc, raw: j };
+  } catch (err: any) {
+    return { ok: false, error: `OWM fetch error: ${err?.message ?? String(err)}` };
+  }
+}
+
 // -------------------- Inline tool implementations --------------------
 class EonetTool {
   name = "eonet_events";
@@ -192,15 +306,70 @@ export async function runHazardAgent(userQuery: string) {
   return finalText ?? `No textual final message. Raw followup: ${JSON.stringify(followup).slice(0,2000)}`;
 }
 
-// -------------------- Exported Server Action equivalent --------------------
+/** Replacement getHazardInfo: pre-query Tavily then fallback to OWM, then to LLM */
 export async function getHazardInfo(prevState: any, formData: FormData) {
-  const query = formData.get("query") as string;
+  const query = (formData.get("query") || "").toString().trim();
   if (!query) return { result: null, error: "Provide a query" };
+
+  // 1) Try Tavily for a direct factual answer
   try {
-    const out = await runHazardAgent(query);
-    return { result: out, error: null };
+    const tav = await queryTavilyRaw(query);
+    if (tav.ok) {
+      // If Tavily gave a temp, return it immediately
+      if (tav.tempC !== null && tav.tempC !== undefined) {
+        const payload = {
+          query,
+          timestamp: new Date().toISOString(),
+          source: tav.source,
+          answer: tav.text,
+          tempC: tav.tempC,
+          raw: tav.raw,
+        };
+        return { result: JSON.stringify(payload, null, 2), error: null };
+      }
+
+      // If Tavily returned a concise answer that looks like a factual snippet, return it
+      if (tav.text && tav.text.length < 800) {
+        const payload = { query, timestamp: new Date().toISOString(), source: tav.source, answer: tav.text, raw: tav.raw };
+        return { result: JSON.stringify(payload, null, 2), error: null };
+      }
+
+      // Otherwise fall through to OWM (we still keep the tavily raw in debug)
+    } else {
+      // Tavily returned error; log and continue to OWM
+      console.warn("Tavily error:", tav.error);
+    }
   } catch (err: any) {
-    console.error("Final getHazardInfo error:", err?.message ?? err);
+    console.warn("Tavily unexpected error:", err?.message ?? err);
+  }
+
+  // 2) Try OpenWeatherMap (most reliable numeric temp)
+  try {
+    const owm = await queryOpenWeather(query);
+    if (owm.ok && owm.tempC !== null && owm.tempC !== undefined) {
+      const payload = {
+        query,
+        timestamp: new Date().toISOString(),
+        source: owm.source,
+        tempC: owm.tempC,
+        description: owm.description,
+        raw: owm.raw,
+      };
+      return { result: JSON.stringify(payload, null, 2), error: null };
+    } else {
+      console.warn("OpenWeatherMap fallback failed:", owm.error);
+    }
+  } catch (err: any) {
+    console.warn("OWM unexpected error:", err?.message ?? err);
+  }
+
+  // 3) Last resort: call your LLM runner (broader hazard summary, not guaranteed real-time)
+  try {
+    const out = await runHazardAgent(query); // reuses your robust agent runner in the same file
+    const payload = { query, timestamp: new Date().toISOString(), source: "aiml_agent", answer: out };
+    return { result: JSON.stringify(payload, null, 2), error: null };
+  } catch (err: any) {
+    console.error("Final LLM fallback error:", err?.message ?? err);
     return { result: null, error: err?.message ?? "Unknown error" };
   }
 }
