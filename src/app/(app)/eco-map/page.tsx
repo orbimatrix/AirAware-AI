@@ -1,26 +1,18 @@
-import { EcoMap } from "@/components/eco-map/eco-map";
-import { ReportForm } from "@/components/eco-map/report-form";
+import { HazardsAgentClient } from "@/components/eco-map/hazards-agent-client";
 import { PageHeader } from "@/components/page-header";
 
 export const metadata = {
-  title: "Eco-Map",
+  title: "AI Hazard Agent",
 };
 
 export default function EcoMapPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Eco-Map"
-        description="View and report environmental issues in your community."
+        title="AI-Powered Hazard Agent"
+        description="Ask the AI agent about current environmental hazards in any location."
       />
-      <div className="grid gap-12 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-            <EcoMap />
-        </div>
-        <div className="lg:col-span-1">
-            <ReportForm />
-        </div>
-      </div>
+      <HazardsAgentClient />
     </div>
   );
 }
