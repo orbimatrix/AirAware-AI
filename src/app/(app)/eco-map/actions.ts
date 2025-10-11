@@ -37,20 +37,20 @@ const llm = new ChatOpenAI({
 // 2. NASA EONET tool
 class EonetTool extends Tool {
     name = "eonet_events";
-    description = "Get recent natural events from NASA EONET. Input should be a JSON object with 'days' and optional 'category'. Example: {\"days\": 7, \"category\": \"wildfires\"}";
+    description = "Get recent natural events from NASA EONET. Input should be a JSON object with 'days' and optional 'source'. Example: {\"days\": 7, \"source\": \"VIIRS_SNPP_NRT\"}";
     
-    // Zod schema for input validation
     schema = z.object({
         days: z.number().optional().default(7).describe("Number of past days to fetch events for."),
-        category: z.string().optional().describe("Category of events (e.g., 'wildfires', 'severeStorms').")
+        source: z.string().optional().describe("The source of the events (e.g., 'VIIRS_SNPP_NRT' for wildfires).")
     });
 
     async _call(input: z.infer<this['schema']>) {
         try {
             const url = new URL("https://eonet.gsfc.nasa.gov/api/v3/events");
-            if (input.days) url.searchParams.set("days", String(input.days));
-            // Corrected to use the 'category' parameter as expected by the EONET API
-            if (input.category) url.searchParams.set("category", input.category);
+            url.searchParams.set("days", String(input.days));
+            if (input.source) {
+                url.searchParams.set("source", input.source);
+            }
             
             const res = await fetch(url.toString());
             if (!res.ok) return `Error fetching EONET data: ${res.statusText}`;
