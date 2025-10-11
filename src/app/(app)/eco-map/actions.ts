@@ -2,9 +2,9 @@
 
 import { MemorySaver } from '@langchain/langgraph';
 import { HumanMessage } from '@langchain/core/messages';
-import { Tool } from 'langchain/tools';
+import { Tool } from '@langchain/core/tools';
 import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { OpenAI } from 'openai';
+import { ChatOpenAI } from '@langchain/openai';
 
 // Define state for the form action
 type HazardAgentState = {
@@ -12,7 +12,7 @@ type HazardAgentState = {
   error: string | null;
 };
 
-// 1. Configure AIML client
+// 1. Configure AIML client via ChatOpenAI
 const AIML_API_KEY = process.env.AIML_API_KEY;
 const OWM_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
@@ -20,29 +20,18 @@ if (!AIML_API_KEY || !OWM_KEY) {
   console.error("Missing required API keys: AIML_API_KEY or NEXT_PUBLIC_OPENWEATHER_API_KEY");
 }
 
-const aimlClient = new OpenAI({
+const llm = new ChatOpenAI({
   apiKey: AIML_API_KEY,
-  baseURL: 'https://api.aimlapi.com/v1',
+  baseURL: "https://api.aimlapi.com/v1",
+  model: "mistralai/Mistral-7B-Instruct-v0.2",
+  temperature: 0.2,
+  maxTokens: 600,
 });
-
-// Wrapper LLM for LangChain agent compatibility
-class AimlLLM {
-  async call(messages: { role: string; content: string }[]) {
-    if (!AIML_API_KEY) throw new Error("AIML_API_KEY is not configured.");
-    const completion = await aimlClient.chat.completions.create({
-      model: 'mistralai/Mistral-7B-Instruct-v0.2',
-      messages: messages.filter(m => m.content), // Filter out empty messages
-      temperature: 0.2,
-      max_tokens: 600,
-    });
-    return completion.choices[0].message.content;
-  }
-}
 
 // 2. NASA EONET tool
 class EonetTool extends Tool {
     name = "eonet_events";
-    description = "Get recent natural events from NASA EONET. Input should be a JSON string with 'days' and optional 'category' or 'country'. Example: {'days': 7, 'category': 'wildfires'}";
+    description = "Get recent natural events from NASA EONET. Input should be a JSON string with 'days' and optional 'category'. Example: {'days': 7, 'category': 'wildfires'}";
 
     async _call(input: string) {
         try {
@@ -51,9 +40,10 @@ class EonetTool extends Tool {
             if (params.days) url.searchParams.set("days", String(params.days));
             if (params.category) url.searchParams.set("category", params.category);
             const res = await fetch(url.toString());
+            if (!res.ok) return `Error fetching EONET data: ${res.statusText}`;
             return JSON.stringify(await res.json());
         } catch (e: any) {
-            return `Error fetching EONET events: ${e.message}`;
+            return `Error in EonetTool: ${e.message}`;
         }
     }
 }
@@ -61,15 +51,16 @@ class EonetTool extends Tool {
 // 3. USGS Earthquakes tool
 class UsgsQuakesTool extends Tool {
     name = "usgs_earthquakes";
-    description = "Get recent earthquakes from USGS. Fetches all quakes from the last hour.";
+    description = "Get recent earthquakes from USGS. Fetches all quakes from the last hour by default.";
 
     async _call() {
         try {
             const url = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_hour.geojson";
             const res = await fetch(url);
+            if (!res.ok) return `Error fetching USGS data: ${res.statusText}`;
             return JSON.stringify(await res.json());
         } catch (e: any) {
-            return `Error fetching USGS earthquakes: ${e.message}`;
+            return `Error in UsgsQuakesTool: ${e.message}`;
         }
     }
 }
@@ -77,35 +68,34 @@ class UsgsQuakesTool extends Tool {
 
 // 4. OpenWeatherMap tool
 class OwmWeatherTool extends Tool {
-    name = "openweathermap_weather_air";
+    name = "openweathermap_weather_and_air_quality";
     description = "Get current weather and air quality from OpenWeatherMap for a given latitude and longitude. Input must be a string 'lat,lon'. Example: '24.8607,67.0011'";
 
     async _call(input: string) {
          if (!OWM_KEY) throw new Error("OPENWEATHERMAP_API_KEY is not configured.");
         try {
-            const [lat, lon] = input.split(",").map(Number);
+            const [lat, lon] = input.split(",").map(s => s.trim());
+            if (isNaN(Number(lat)) || isNaN(Number(lon))) {
+                return "Invalid input. Please provide latitude and longitude as a comma-separated string, e.g., '24.8607,67.0011'";
+            }
             const wurl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${OWM_KEY}&units=metric`;
             const aurl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${OWM_KEY}`;
             const [w, a] = await Promise.all([fetch(wurl).then(r => r.json()), fetch(aurl).then(r => r.json())]);
             return JSON.stringify({ weather: w, air: a });
         } catch (e: any) {
-            return `Error fetching OpenWeatherMap data: ${e.message}`;
+            return `Error in OwmWeatherTool: ${e.message}`;
         }
     }
 }
 
 // 5. Create the agent
 const agentCheckpointer = new MemorySaver();
-const aimlLlm = new AimlLLM();
+
+const tools: Tool[] = [new EonetTool(), new UsgsQuakesTool(), new OwmWeatherTool()];
 
 const agent = createReactAgent({
-  llm: {
-    call: async (input: { messages: { role: string; content: string }[] }) => {
-        const content = await aimlLlm.call(input.messages);
-        return { text: content ?? "" }; // Ensure content is not null
-    },
-  } as any,
-  tools: [new EonetTool(), new UsgsQuakesTool(), new OwmWeatherTool()],
+  llm: llm.bindTools(tools), // Correctly bind tools to the LLM
+  tools,
   checkpointSaver: agentCheckpointer,
 });
 
@@ -134,7 +124,17 @@ export async function getHazardInfo(
 
         // Get the last message from the agent
         const lastMessage = finalState.messages[finalState.messages.length - 1];
-        const content = typeof lastMessage.content === 'string' ? lastMessage.content : JSON.stringify(lastMessage.content);
+        
+        let content: string;
+        if (typeof lastMessage.content === 'string') {
+            content = lastMessage.content;
+        } else if (Array.isArray(lastMessage.content)) {
+            // If content is an array (potentially with text and other parts), find the text part.
+            const textPart = lastMessage.content.find(part => typeof part === 'string' || part.type === 'text');
+            content = textPart ? (typeof textPart === 'string' ? textPart : textPart.text) : JSON.stringify(lastMessage.content);
+        } else {
+            content = JSON.stringify(lastMessage.content);
+        }
 
         return { result: content, error: null };
     } catch (e: any) {
