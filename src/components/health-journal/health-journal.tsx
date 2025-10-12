@@ -5,7 +5,7 @@ import { HealthLogList } from './health-log-list';
 import { useHealthLog } from '@/hooks/use-health-log';
 import { useAirQualityData } from '@/hooks/useAirQualitydata';
 import { Button } from '../ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '../ui/card';
 import { Skeleton } from '../ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { AlertCircle } from 'lucide-react';
