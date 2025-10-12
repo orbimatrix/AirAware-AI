@@ -10,7 +10,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { PlusCircle } from 'lucide-react';
-import { mockAqiData } from '@/lib/data';
 import { HealthLogEntry } from '@/hooks/use-health-log';
 import { toast } from '@/hooks/use-toast';
 
@@ -33,9 +32,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 type HealthLogFormProps = {
   onAddEntry: (entry: HealthLogEntry) => void;
+  currentAqi: number;
 };
 
-export function HealthLogForm({ onAddEntry }: HealthLogFormProps) {
+export function HealthLogForm({ onAddEntry, currentAqi }: HealthLogFormProps) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,7 +48,7 @@ export function HealthLogForm({ onAddEntry }: HealthLogFormProps) {
     const today = new Date().toISOString().split('T')[0];
     const newEntry: HealthLogEntry = {
       date: today,
-      aqi: mockAqiData.aqi,
+      aqi: currentAqi,
       symptoms: data.symptoms,
       notes: data.notes || '',
     };
@@ -64,7 +64,7 @@ export function HealthLogForm({ onAddEntry }: HealthLogFormProps) {
     <Card>
       <CardHeader>
         <CardTitle>Log Today's Symptoms</CardTitle>
-        <CardDescription>How are you feeling today? Current AQI is {mockAqiData.aqi}.</CardDescription>
+        <CardDescription>How are you feeling today? Current AQI is <span className="font-bold text-primary">{currentAqi}</span>.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
