@@ -4,10 +4,7 @@
 # Specifies the build process for the backend.
 build:
   # Command to install dependencies.
-  # We are using npm, but you can also use 'yarn' or 'pnpm'.
-  # For example:
-  # pnpm: install
-  npm: install
+  command: npm install
   # Command to run the build script from package.json
   run: npm run build
 
