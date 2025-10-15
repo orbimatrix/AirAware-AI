@@ -6,22 +6,11 @@ steps:
       - https://github.com/orbimatrix/AirAware-AI.git
       - .
 
-  - id: install
-    name: gcr.io/cloud-builders/npm
+  - name: gcr.io/cloud-builders/npm
     args:
       - ci
 
-  - id: build
-    name: gcr.io/cloud-builders/npm
+  - name: gcr.io/cloud-builders/npm
     args:
       - run
       - build
-
-  - id: deploy
-    name: gcr.io/cloud-builders/gcloud
-    entrypoint: bash
-    args:
-      - -c
-      - |
-        npm install -g firebase-tools
-        firebase deploy --only hosting --token ${_FIREBASE_TOKEN}
